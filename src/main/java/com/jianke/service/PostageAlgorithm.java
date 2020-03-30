@@ -8,7 +8,7 @@ import com.jianke.vo.DeliveryTypeVo;
 import com.jianke.vo.PostageTemplateVo;
 import com.jianke.vo.PostageTypeVo;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;

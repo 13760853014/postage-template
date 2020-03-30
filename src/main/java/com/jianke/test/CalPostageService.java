@@ -1,17 +1,17 @@
-package com.jianke.service;
+package com.jianke.test;
 
 import com.alibaba.fastjson.JSON;
 import com.jianke.entity.Coupon;
 import com.jianke.entity.cart.Merchant;
 import com.jianke.entity.cart.ShopCartBase;
 import com.jianke.entity.cart.ShopCartItem;
+import com.jianke.service.PostageAlgorithm;
 import com.jianke.vo.DeliveryTypeVo;
 import com.jianke.vo.PostageTemplateVo;
 import com.jianke.vo.PostageTypeVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

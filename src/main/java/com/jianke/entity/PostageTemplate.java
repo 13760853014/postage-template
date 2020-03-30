@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -27,7 +26,6 @@ public class PostageTemplate implements Serializable {
     /**
      * 配置id
      */
-    @Id
     private String id;
 
     private String relativeId;
