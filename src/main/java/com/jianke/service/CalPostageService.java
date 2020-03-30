@@ -50,7 +50,7 @@ public class CalPostageService {
         PostageTypeVo offlinePay = new PostageTypeVo("1-1", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12");
         templateVo.addPostageType(onlinePay);
         templateVo.addPostageType(offlinePay);
-        System.out.println(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
+        System.out.println(templateVo.getTemplateName() + "-----" + JSON.toJSONString(templateVo));
         return templateVo;
     }
 
