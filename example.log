@@ -1,0 +1,11 @@
+INFO main com.jianke.service.CalPostageService - 姓名:凤思高举,密码:******
+INFO main com.jianke.service.CalPostageService - 姓名:凤思高举,密码:******
+INFO main com.jianke.service.CalPostageService - 姓名:凤思高举,密码:******
+INFO main com.jianke.service.PostageAlgorithm - 购物车商品[11, 12]，可以使用商品券[Coupon(couponId=null, couponName=null, couponValue=1000, minConsume=null, type=1, amount=null, startDrawDate=null, endDrawDate=null, relativeFlag=null, relativeDays=null, productCodes=null), Coupon(couponId=null, couponName=null, couponValue=1000, minConsume=null, type=2, amount=null, startDrawDate=null, endDrawDate=null, relativeFlag=null, relativeDays=null, productCodes=[11, 12])]
+INFO main com.jianke.service.PostageAlgorithm - 通用模板【通用模板】，计算运费商品[11, 12, 22, 23, 31]， 总金额56000, 可用优惠券金额2000, 最低免邮金额9900， 是否免邮=true
+INFO main com.jianke.service.PostageAlgorithm - 此订单满足99元包邮，已到达包邮门槛，整单包邮
+INFO main com.jianke.service.CalPostageService - 平台app，支付方式99，是否包邮true，返回的快递方式[{"deliveryPrice":0,"id":"EMS0","logisticsName":"EMS","logisticsNum":"5"},{"deliveryPrice":0,"id":"顺丰0","logisticsName":"顺丰","logisticsNum":"7"}]
+INFO main com.jianke.service.PostageAlgorithm - 购物车商品[11, 12]，可以使用商品券[Coupon(couponId=null, couponName=null, couponValue=1000, minConsume=null, type=1, amount=null, startDrawDate=null, endDrawDate=null, relativeFlag=null, relativeDays=null, productCodes=null), Coupon(couponId=null, couponName=null, couponValue=1000, minConsume=null, type=2, amount=null, startDrawDate=null, endDrawDate=null, relativeFlag=null, relativeDays=null, productCodes=[11, 12])]
+INFO main com.jianke.service.PostageAlgorithm - 通用模板【通用模板】，计算运费商品[11, 12, 22, 23, 31]， 总金额56000, 可用优惠券金额2000, 最低免邮金额9900， 是否免邮=true
+INFO main com.jianke.service.PostageAlgorithm - 此订单满足99元包邮，已到达包邮门槛，整单包邮
+INFO main com.jianke.service.CalPostageService - 平台app，支付方式99，是否包邮true，返回的快递方式[{"deliveryPrice":0,"id":"EMS0","logisticsName":"EMS","logisticsNum":"5"},{"deliveryPrice":0,"id":"顺丰0","logisticsName":"顺丰","logisticsNum":"7"}]
