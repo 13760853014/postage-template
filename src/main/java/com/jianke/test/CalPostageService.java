@@ -25,13 +25,8 @@ public class CalPostageService {
         templateVo.setFreePostagePrice(99 * 100L);
         templateVo.setPlatforms(Arrays.asList("app","mobile","mini")).setStatus(1);
         templateVo.setType(0).setTemplateName("通用模板");
-
         //设置快递方式  是否支持免邮(1是/0否)-在线支付,  免邮快递方式， 不免邮快递方式
-        PostageTypeVo onlinePay = new PostageTypeVo("1-99", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12");
-        //设置快递方式  是否免邮(1是/0否)-货到付款
-        PostageTypeVo offlinePay = new PostageTypeVo("1-1", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12");
-        templateVo.addPostageType(onlinePay);
-        templateVo.addPostageType(offlinePay);
+        templateVo.addType(new PostageTypeVo("1-99", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12"));
         System.out.println(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -43,13 +38,8 @@ public class CalPostageService {
         templateVo.setPlatforms(Arrays.asList("app","mobile","mini")).setStatus(1);
         templateVo.setType(1).setTemplateName("特殊模板2222");
         templateVo.setProductCodes(Arrays.asList(21,22,23,24,25,26,27,28,29));
-
         //设置快递方式  是否支持免邮(1是/0否)-在线支付,  免邮快递方式， 不免邮快递方式
-        PostageTypeVo onlinePay = new PostageTypeVo("1-99", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12");
-        //设置快递方式  是否免邮(1是/0否)-货到付款
-        PostageTypeVo offlinePay = new PostageTypeVo("1-1", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12");
-        templateVo.addPostageType(onlinePay);
-        templateVo.addPostageType(offlinePay);
+        templateVo.addType(new PostageTypeVo("1-99", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12"));
         System.out.println(templateVo.getTemplateName() + "-----" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -61,13 +51,8 @@ public class CalPostageService {
         templateVo.setPlatforms(Arrays.asList("app","mobile","mini")).setStatus(1);
         templateVo.setType(1).setTemplateName("特殊模板333");
         templateVo.setProductCodes(Arrays.asList(31,32,33,34,35,36,37,38,39));
-
         //设置快递方式  是否支持免邮(1是/0否)-在线支付,  免邮快递方式， 不免邮快递方式
-        PostageTypeVo onlinePay = new PostageTypeVo("1-99", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12");
-        //设置快递方式  是否免邮(1是/0否)-货到付款
-        PostageTypeVo offlinePay = new PostageTypeVo("0-1", "7-顺丰-10|5-EMS-12");
-        templateVo.addPostageType(onlinePay);
-        templateVo.addPostageType(offlinePay);
+        templateVo.addType(new PostageTypeVo("1-99", "7-顺丰-0|5-EMS-0", "7-顺丰-10|5-EMS-12"));
         System.out.println(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
     }

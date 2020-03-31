@@ -92,7 +92,7 @@ public class PostageTemplateVo implements Serializable {
 
     }
 
-    public void addPostageType(PostageTypeVo vo) {
+    public void addType(PostageTypeVo vo) {
         if (postageTypes == null) {
             postageTypes = new ArrayList<>();
         }

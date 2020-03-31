@@ -62,7 +62,7 @@ public class PostageAlgorithm {
                 .filter(t -> t.getType() == 1)
                 .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
                 .collect(Collectors.toList());
-        Map<String, List<Integer>> templateSkuMap = sortTemplates.stream().collect(Collectors.toMap(PostageTemplateVo::getId, PostageTemplateVo::getProductCodes));
+        Map<String, List<Integer>> templateSkuMap = sortTemplates.stream().collect(Collectors.toMap(PostageTemplateVo::getId, PostageTemplateVo::getProductCodes, (p1, p2) -> p2));
         Set<Long> allTemplateSkus = sortTemplates.stream().flatMap(t -> t.getProductCodes().stream()).map(Integer::longValue).collect(Collectors.toSet());
         //2、遍历所有特殊模板，一个个判断是否可以免邮
         Set<Integer> hasCalTemplateSkus = new HashSet<>();
