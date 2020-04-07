@@ -294,4 +294,61 @@ public class PostageAlgorithm {
         }
         return returnTypes;
     }
+
+    public static Map<String, String> getPostageLabel(List<PostageTemplateVo> postageTemplateList, Integer skuCode, String platform) {
+        Map<String, String> map = new HashMap<>(4);
+        //获取特殊模板
+        PostageTemplateVo specialTemplateVo = postageTemplateList.stream().filter(t -> t.getType() == 1)
+                .filter(t -> t.getPlatforms().contains(platform))
+                .filter(t -> t.getProductCodes().contains(skuCode))
+                .findFirst().orElse(null);
+        if (specialTemplateVo != null) {
+            //如果允许包邮，则设置免邮门槛标签
+            PostageTypeVo freePostage = specialTemplateVo.getPostageTypes().stream().filter(pt -> pt.getIsAllowFree() == 1).findFirst().orElse(null);
+            if (freePostage != null) {
+                map.put("postageLabel", String.format("满%s元包邮", specialTemplateVo.getFreePostagePrice() / 100));
+            } else {
+                //如果商品不允许包邮，则设置邮费提醒
+                List<PostageTypeVo> unFreePostages = specialTemplateVo.getPostageTypes().stream().filter(pt -> pt.getIsAllowFree() == 0).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(unFreePostages)) {
+                    DeliveryTypeVo deliveryTypeVo = unFreePostages.stream()
+                            .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
+                            .sorted(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice))
+                            .findFirst().orElse(null);
+                    if (deliveryTypeVo != null) {
+                        map.put("postageDesc", String.format("特殊商品不参与包邮，在线支付运费%s元起", deliveryTypeVo.getDeliveryPrice() / 100));
+                    }
+                }
+            }
+        } else {
+            //获取通用模板
+            PostageTemplateVo commonTemplateVo = postageTemplateList.stream()
+                    .filter(t -> t.getType() == 0)
+                    .filter(t -> t.getPlatforms().contains(platform))
+                    .findFirst().orElse(null);
+            if (commonTemplateVo == null) {
+                map.put("postageLabel", String.format("满%s元包邮", 99));
+            } else {
+                //如果允许包邮，则设置免邮门槛标签
+                PostageTypeVo freePostage = commonTemplateVo.getPostageTypes().stream().filter(pt -> pt.getIsAllowFree() == 1).findFirst().orElse(null);
+                if (freePostage != null) {
+                    map.put("postageLabel", String.format("满%s元包邮", commonTemplateVo.getFreePostagePrice() / 100));
+                } else {
+                    //如果商品不允许包邮，则设置邮费提醒
+                    List<PostageTypeVo> unFreePostages = commonTemplateVo.getPostageTypes().stream().filter(pt -> pt.getIsAllowFree() == 0).collect(Collectors.toList());
+                    if (!CollectionUtils.isEmpty(unFreePostages)) {
+                        DeliveryTypeVo deliveryTypeVo = unFreePostages.stream()
+                                .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
+                                .sorted(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice))
+                                .findFirst().orElse(null);
+                        if (deliveryTypeVo != null) {
+                            map.put("postageDesc", String.format("特殊商品不参与包邮，在线支付运费%s元起", deliveryTypeVo.getDeliveryPrice() / 100));
+                        }
+                    }
+                }
+            }
+        }
+        log.info("商品邮费标签提醒======={}", JSON.toJSONString(map));
+        return map;
+    }
 }

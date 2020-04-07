@@ -106,7 +106,7 @@ public class ShopCartItem implements Serializable{
     /**
      * 是否是处方药，0 :(否) ,1 :(是)
      */
-    private String isRx;
+    private String isRx = "0";
     /**
      * 是否是药品
      */
@@ -140,7 +140,6 @@ public class ShopCartItem implements Serializable{
         this.productName = param[1];
         this.productNum = Integer.valueOf(param[2]);
         this.actualPrice = Long.valueOf(param[3]);
-        this.isRx = param[4];
     }
 
     public List<ShopCartItem> combine(String i, String j, Integer id) {
@@ -151,15 +150,13 @@ public class ShopCartItem implements Serializable{
                 .setProductCode(Long.valueOf(param[0]))
                 .setProductName(param[1])
                 .setCombineNum(Integer.valueOf(param[2]))
-                .setActualPrice(Long.valueOf(param[3]))
-                .setIsRx(param[4]);
+                .setActualPrice(Long.valueOf(param[3]));
         ShopCartItem item1 = new ShopCartItem()
                 .setCombineId(id.longValue())
                 .setProductCode(Long.valueOf(param1[0]))
                 .setProductName(param1[1])
                 .setCombineNum(Integer.valueOf(param1[2]))
-                .setActualPrice(Long.valueOf(param1[3]))
-                .setIsRx(param1[4]);
+                .setActualPrice(Long.valueOf(param1[3]));
         return Arrays.asList(item, item1);
     }
 }

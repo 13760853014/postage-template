@@ -46,7 +46,7 @@ public class PostageTypeVo {
     public PostageTypeVo(String i, String free, String unfree) {
         String[] param = i.split("-");
         this.isAllowFree = Integer.valueOf(param[0]);
-        this.payType = Integer.valueOf(param[1]);
+        this.payType = 99;
         if (isAllowFree == 0) {
             log.info("-----邮费模板配置错误-----");
         }
@@ -59,7 +59,7 @@ public class PostageTypeVo {
     public PostageTypeVo(String i, String unfree) {
         String[] param = i.split("-");
         this.isAllowFree = Integer.valueOf(param[0]);
-        this.payType = Integer.valueOf(param[1]);
+        this.payType = 99;
         if (isAllowFree == 1) {
             log.info("-----邮费模板配置错误-----");
         }
