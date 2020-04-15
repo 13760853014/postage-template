@@ -23,7 +23,21 @@ public class PostageAlgorithm {
      * 1、先计算通用模板
      * 2、再计算特殊模板
      */
-    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons) {
+    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> freePostage, List<Long> coldChainSku) {
+        List<Long> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode()).distinct().collect(Collectors.toList());
+        for (Long productCode : itemProductCode) {
+            if (freePostage.contains(productCode)) {
+                log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
+                return true;
+            }
+        }
+        for (Long productCode : itemProductCode) {
+            if (coldChainSku.contains(productCode)) {
+                log.info("客官，你买了一个冷链配送的商品，sku={}", productCode);
+                return false;
+            }
+        }
+
         List<PostageTemplateVo> templates = templateVos.stream().filter(t -> t.getPlatforms().contains(p)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(templates)) {
             log.info("平台{}查询不到对应的运费模板，使用默认的技术配置模板", p);
@@ -40,7 +54,7 @@ public class PostageAlgorithm {
         boolean commonTemplateIsAllowFree = false;
         if (commonTemplateVo != null) {
             PostageTypeVo postageType = commonTemplateVo.getPostageTypes().stream()
-                    .filter(pt -> pt.getPayType() == 1)
+                    .filter(pt -> pt.getPayType().equals(payType))
                     .filter(pt -> pt.getIsAllowFree() == 1)
                     .findAny().orElse(null);
             commonTemplateIsAllowFree = postageType != null;
@@ -68,7 +82,7 @@ public class PostageAlgorithm {
         Set<Integer> hasCalTemplateSkus = new HashSet<>();
         for (PostageTemplateVo templateVo : sortTemplates) {
             PostageTypeVo postageType = commonTemplateVo.getPostageTypes().stream()
-                    .filter(pt -> pt.getPayType() == 1)
+                    .filter(pt -> pt.getPayType().equals(payType))
                     .filter(pt -> pt.getIsAllowFree() == 1)
                     .findAny().orElse(null);
             boolean specialTemplateIsAllowFree = postageType != null;
@@ -101,7 +115,7 @@ public class PostageAlgorithm {
             long itemAmount = calItemTotalNum(items);
             long couponValue = templateUseCouponAmount(items, coupons);
             isFree = itemAmount - couponValue > templateVo.getFreePostagePrice();
-            log.info("特殊模板【{}】，计算运费商品{}， 总金额{}, 可用优惠券金额{}, 最低免邮金额{}， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, couponValue, templateVo.getFreePostagePrice(), isFree);
+            log.info("特殊模板【{}】，计算运费商品{}分， 总金额{}分, 可用优惠券金额{}分, 最低免邮金额{}分， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, couponValue, templateVo.getFreePostagePrice(), isFree);
             if (isFree) {
                 log.info("此订单满足{}元包邮，已到达包邮门槛，整单包邮", templateVo.getFreePostagePrice() / 100);
                 break;
@@ -110,39 +124,6 @@ public class PostageAlgorithm {
         return isFree;
     }
 
-    public static void postageDesc(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType) {
-        List<PostageTemplateVo> templateVoList = templateVos.stream()
-                .filter(t -> t.getPlatforms().contains(p)).collect(Collectors.toList());
-        if (templateVoList.size() == 1) {
-            log.info("不包邮金额说明: 全部商品需满{}元包邮，当前未满足此条件。", templateVoList.get(0).getFreePostagePrice() / 100);
-            return;
-        }
-
-        StringBuilder info = new StringBuilder();
-        List<Long> unFreeProduct = unFreeProduct(templateVos, payType, p);
-        if (!CollectionUtils.isEmpty(unFreeProduct)) {
-            Map<Long, String> itemMap = shopCartBase.getMerchants().stream()
-                    .flatMap(shopCart -> shopCart.getItems().stream())
-                    .collect(Collectors.toMap(item -> item.getProductCode(), item -> item.getProductName(), (i1, i2) -> i2));
-            info.append("此订单中");
-            for (Long skuCode : unFreeProduct) {
-                info.append("此订单中" + itemMap.get(skuCode) + ",不参与包邮");
-            }
-            info.append("不参与包邮");
-        }
-
-        //1、筛选特殊配置模板
-        List<PostageTemplateVo> specialTemplates = templateVos.stream()
-                .filter(t -> t.getType() == 1)
-                .filter(t -> t.getPlatforms().contains(p))
-                .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
-                .collect(Collectors.toList());
-
-        for (PostageTemplateVo templateVo : specialTemplates) {
-
-        }
-
-    }
 
     //特殊模板，配置了该平台，该支付方式下，不能参与免邮计算的商品
     public static List<Long> unFreeProduct(List<PostageTemplateVo> templateVos, Integer payType, String p) {
@@ -224,7 +205,7 @@ public class PostageAlgorithm {
         long couponValue = templateUseCouponAmount(items, coupons);
         boolean isFree = itemAmount - couponValue > commonTemplates.getFreePostagePrice();
         List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
-        log.info("通用模板【{}】，计算运费商品{}， 总金额{}, 可用优惠券金额{}, 最低免邮金额{}， 是否免邮={}", commonTemplates.getTemplateName(), skuCodes, itemAmount, couponValue, commonTemplates.getFreePostagePrice(), isFree);
+        log.info("通用模板【{}】，计算运费商品{}， 总金额{}分, 可用优惠券金额{}分, 最低免邮金额{}分， 是否免邮={}", commonTemplates.getTemplateName(), skuCodes, itemAmount, couponValue, commonTemplates.getFreePostagePrice(), isFree);
         return isFree;
     }
 
@@ -233,66 +214,60 @@ public class PostageAlgorithm {
      * 1、不包邮的情况， 返回不包邮的快递方式中，价格最高的2个，快递类型不重复
      * 2、包邮的情况，   返回所有包邮的快递方式中， 交集最多的2个快递类型，否则返回顺丰
      */
-    public static List<DeliveryTypeVo> getPostageType(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, boolean isFree) {
-        System.out.println();
-        List<DeliveryTypeVo> returnTypes = new ArrayList<>();
-        if (!isFree) {
-            //根据平台，支付类型，获取所有模板不包邮的快递方式
-            List<DeliveryTypeVo> unFreeDeliveryTypeVos = new ArrayList<>();
-            for(PostageTemplateVo vo : templateVos) {
-                if (!vo.getPlatforms().contains(p)) {
-                    continue;
-                }
-                for (PostageTypeVo type : vo.getPostageTypes()) {
-                    if (payType.equals(type.getPayType()) && type.getIsAllowFree() == 1) {
-                        unFreeDeliveryTypeVos.addAll(type.getUnFreeDeliveryTypeVos());
-                    }
-                }
-            }
-            log.debug("平台{}，支付类型{}，所有模板不包邮的快递方式{}", p, payType, JSON.toJSONString(unFreeDeliveryTypeVos));
-            //选出邮费最高的2个
-            unFreeDeliveryTypeVos.sort(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice).reversed());
-            for (DeliveryTypeVo vo : unFreeDeliveryTypeVos) {
-                if (returnTypes.size() >= 2) {
-                    return returnTypes;
-                }
-                //是否存在此快递方式
-                DeliveryTypeVo deliveryTypeVo = returnTypes.stream().filter(d -> d.getLogisticsNum().equals(vo.getLogisticsNum())).findFirst().orElse(null);
-                if (deliveryTypeVo == null) {
-                    returnTypes.add(vo);
-                }
-            }
-        } else {
-            List<DeliveryTypeVo> freeDeliveryTypeVos = new ArrayList<>();
-            for(PostageTemplateVo vo : templateVos) {
-                if (!vo.getPlatforms().contains(p)) {
-                    continue;
-                }
-                for (PostageTypeVo type : vo.getPostageTypes()) {
-                    if (payType.equals(type.getPayType()) && type.getIsAllowFree() == 1) {
-                        freeDeliveryTypeVos.addAll(type.getFreeDeliveryTypeVos());
-                    }
-                }
-            }
-            log.debug("平台{}，支付类型{}，所有模板包邮的快递方式{}", p, payType, JSON.toJSONString(freeDeliveryTypeVos));
-            Map<String, Long> map = freeDeliveryTypeVos.stream().collect(groupingBy(DeliveryTypeVo::getId, Collectors.counting()));
-            List<String> deliveryTypeIds = map.keySet().stream().filter(key -> map.get(key) > 1L).limit(2).collect(Collectors.toList());
-            Map<String, List<DeliveryTypeVo>> deliveryTypeMap = freeDeliveryTypeVos.stream().collect(groupingBy(DeliveryTypeVo::getId));
-
-            //选出交集最多的2个
-            if (deliveryTypeIds.size() == 2) {
-                for (String id : deliveryTypeIds) {
-                    returnTypes.add(deliveryTypeMap.get(id).get(0));
-                }
-            } else if (deliveryTypeIds.size() == 1) {
-                String id = deliveryTypeIds.get(0);
-                returnTypes.add(deliveryTypeMap.get(id).get(0));
-                returnTypes.add(new DeliveryTypeVo("5","顺丰", true, 0L));
-            } else {
-                returnTypes.add(new DeliveryTypeVo("5","顺丰", true, 0L));
+    public static List<DeliveryTypeVo> getPostageType(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, boolean isFree, List<Long> coldChainSku) {
+        List<Long> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode()).distinct().collect(Collectors.toList());
+        for (Long productCode : itemProductCode) {
+            if (coldChainSku.contains(productCode)) {
+                log.info("客官，你买了一个冷链配送的商品，只能顺丰冷链配送哦");
+                return Arrays.asList(new DeliveryTypeVo("5","顺丰冷链", false, 8888L));
             }
         }
-        return returnTypes;
+
+        System.out.println();
+        if (!isFree) {
+            //根据平台，支付类型，获取所有模板不包邮的快递方式
+            List<DeliveryTypeVo> unFreeDeliveryTypeVos = templateVos.stream()
+                    .filter(t -> t.getPlatforms().contains(p))
+                    .flatMap(t -> t.getPostageTypes().stream())
+                    .filter(pt -> payType.equals(pt.getPayType()) && pt.getIsAllowFree() == 0)
+                    .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
+                    .collect(Collectors.toList());
+            log.debug("平台{}，支付类型{}，所有模板不包邮的快递方式{}", p, payType, JSON.toJSONString(unFreeDeliveryTypeVos));
+            //选出邮费最高的2个
+            return unFreeDeliveryTypeVos.stream().sorted(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice).reversed()).limit(2).collect(Collectors.toList());
+        }
+
+        //免邮的情况，选出交集数量最多的2个
+        List<DeliveryTypeVo> freeDeliveryTypeVos = templateVos.stream()
+                .filter(t -> t.getPlatforms().contains(p))
+                .flatMap(t -> t.getPostageTypes().stream())
+                .filter(pt -> payType.equals(pt.getPayType())&& pt.getIsAllowFree() == 1)
+                .flatMap(pt -> pt.getFreeDeliveryTypeVos().stream())
+                .collect(Collectors.toList());
+        log.debug("平台{}，支付类型{}，所有模板包邮的快递方式{}", p, payType, JSON.toJSONString(freeDeliveryTypeVos));
+
+        Map<String, Long> sortedMap = new LinkedHashMap<>();
+        freeDeliveryTypeVos.stream()
+                .collect(groupingBy(DeliveryTypeVo::getId, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .forEachOrdered(e -> sortedMap.put(e.getKey(), e.getValue()));
+        log.debug("所有包邮的快递方式, 计算交集并排序后的情况{}", JSON.toJSONString(sortedMap));
+
+        //选出交集大于2的前面的两个
+        Map<String, List<DeliveryTypeVo>> deliveryTypeMap = freeDeliveryTypeVos.stream().collect(groupingBy(DeliveryTypeVo::getId));
+        List<DeliveryTypeVo> deliveryTypeVos = sortedMap.keySet().stream().filter(key -> sortedMap.get(key) > 1).map(key -> deliveryTypeMap.get(key).get(0)).limit(2).collect(Collectors.toList());
+
+        //如果只有一个交集，并且不是顺风，则添加顺风快递
+        if (deliveryTypeVos.size() == 1) {
+            if (!deliveryTypeVos.get(0).getLogisticsNum().equals("7")) {
+                deliveryTypeVos.add(new DeliveryTypeVo("7","顺丰", true, 0L));
+            }
+        } else if (deliveryTypeVos.size() == 0) {
+            //如果一个交集都没有，则返回顺丰快递（因为已经包邮了，顺丰快递兜底）
+            deliveryTypeVos.add(new DeliveryTypeVo("7","顺丰", true, 0L));
+        }
+        return deliveryTypeVos;
     }
 
     public static Map<String, String> getPostageLabel(List<PostageTemplateVo> postageTemplateList, Integer skuCode, String platform) {
@@ -351,4 +326,40 @@ public class PostageAlgorithm {
         log.info("商品邮费标签提醒======={}", JSON.toJSONString(map));
         return map;
     }
+
+
+//
+//    public static void postageDesc(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType) {
+//        List<PostageTemplateVo> templateVoList = templateVos.stream()
+//                .filter(t -> t.getPlatforms().contains(p)).collect(Collectors.toList());
+//        if (templateVoList.size() == 1) {
+//            log.info("不包邮金额说明: 全部商品需满{}元包邮，当前未满足此条件。", templateVoList.get(0).getFreePostagePrice() / 100);
+//            return;
+//        }
+//
+//        StringBuilder info = new StringBuilder();
+//        List<Long> unFreeProduct = unFreeProduct(templateVos, payType, p);
+//        if (!CollectionUtils.isEmpty(unFreeProduct)) {
+//            Map<Long, String> itemMap = shopCartBase.getMerchants().stream()
+//                    .flatMap(shopCart -> shopCart.getItems().stream())
+//                    .collect(Collectors.toMap(item -> item.getProductCode(), item -> item.getProductName(), (i1, i2) -> i2));
+//            info.append("此订单中");
+//            for (Long skuCode : unFreeProduct) {
+//                info.append("此订单中" + itemMap.get(skuCode) + ",不参与包邮");
+//            }
+//            info.append("不参与包邮");
+//        }
+//
+//        //1、筛选特殊配置模板
+//        List<PostageTemplateVo> specialTemplates = templateVos.stream()
+//                .filter(t -> t.getType() == 1)
+//                .filter(t -> t.getPlatforms().contains(p))
+//                .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
+//                .collect(Collectors.toList());
+//
+//        for (PostageTemplateVo templateVo : specialTemplates) {
+//
+//        }
+//
+//    }
 }

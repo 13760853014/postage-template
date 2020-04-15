@@ -63,11 +63,15 @@ public class CalPostageService {
         //优惠券金额-类型-商品（1全场券，2商品券， 商品用,隔开）
         List<Coupon> coupons = Arrays.asList(new Coupon("1000-1"), new Coupon("1000-2-11,12"));
         String platform = "app";
-        Integer payType = 99;
-        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, payType, coupons);
-        List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, payType, isFree);
+        List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
+        List<Long> coldChainSku = Arrays.asList(90L,91L,92L,93L,94L,95L);
+        //判断商品是否免邮，已经获取对应的运费类型
+        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage, coldChainSku);
+        List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree, coldChainSku);
+        log.info("最终结果：  平台{}，支付方式{}，是否包邮[{}]，返回的快递方式{}", platform, 99, isFree, JSON.toJSONString(deliveryTypeVos));
+
+        //商品在详情页展示的邮费标签
         PostageAlgorithm.getPostageLabel(templateVos, 99, platform);
-        log.info("平台{}，支付方式{}，是否包邮{}，返回的快递方式{}", platform, payType, isFree, JSON.toJSONString(deliveryTypeVos));
     }
 
     public static ShopCartBase buildShopCartBase() {
@@ -77,10 +81,10 @@ public class CalPostageService {
         //编码-名称-数量-单个商品价格(分)
         List<ShopCartItem> list = new ArrayList<>();
         list.add(new ShopCartItem("11-商品名称11-3-3000"));
-        list.add(new ShopCartItem("12-商品名称12-5-4000"));
-        list.add(new ShopCartItem("22-商品名称22-3-3000"));
-        list.add(new ShopCartItem("23-商品名称23-3-3000"));
-        list.add(new ShopCartItem("31-商品名称31-3-3000"));
+//        list.add(new ShopCartItem("12-商品名称12-5-4000"));
+//        list.add(new ShopCartItem("22-商品名称22-3-3000"));
+//        list.add(new ShopCartItem("23-商品名称23-3-3000"));
+//        list.add(new ShopCartItem("31-商品名称31-3-3000"));
         //list.addAll(new ShopCartItem().combine("31-商品31-3-3000","31-商品31-3-3000", 100001));
         merchant.setItems(list);
         log.info("购物车商品------" + JSON.toJSONString(shop));
