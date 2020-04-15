@@ -68,7 +68,7 @@ public class CalPostageService {
         //判断商品是否免邮，已经获取对应的运费类型
         boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage, coldChainSku);
         List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree, coldChainSku);
-        log.info("最终结果：  平台{}，支付方式{}，是否包邮[{}]，返回的快递方式{}", platform, 99, isFree, JSON.toJSONString(deliveryTypeVos));
+        log.info("【最终结果】：  平台{}，支付方式{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, 99, isFree, JSON.toJSONString(deliveryTypeVos));
 
         //商品在详情页展示的邮费标签
         PostageAlgorithm.getPostageLabel(templateVos, 99, platform);
@@ -87,7 +87,7 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("31-商品名称31-3-3000"));
         //list.addAll(new ShopCartItem().combine("31-商品31-3-3000","31-商品31-3-3000", 100001));
         merchant.setItems(list);
-        log.info("购物车商品------" + JSON.toJSONString(shop));
+        log.info("购物车商品------" + JSON.toJSONString(shop) + "\n");
         return shop;
     }
 }
