@@ -71,7 +71,7 @@ public class CalPostageService {
         log.info("【最终结果】：  平台{}，支付方式{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, 99, isFree, JSON.toJSONString(deliveryTypeVos));
 
         //商品在详情页展示的邮费标签
-        PostageAlgorithm.getPostageLabel(templateVos, 99, platform, freePostage);
+        PostageAlgorithm.getPostageLabel(templateVos, 99, platform);
     }
 
     public static ShopCartBase buildShopCartBase() {
