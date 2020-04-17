@@ -26,15 +26,15 @@ public class PostageAlgorithm {
     public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> freePostage, List<Long> coldChainSku) {
         List<Long> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode()).distinct().collect(Collectors.toList());
         for (Long productCode : itemProductCode) {
-            if (freePostage.contains(productCode)) {
-                log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
-                return true;
-            }
-        }
-        for (Long productCode : itemProductCode) {
             if (coldChainSku.contains(productCode)) {
                 log.info("客官，你买了一个冷链配送的商品，sku={}", productCode);
                 return false;
+            }
+        }
+        for (Long productCode : itemProductCode) {
+            if (freePostage.contains(productCode)) {
+                log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
+                return true;
             }
         }
 
@@ -45,6 +45,7 @@ public class PostageAlgorithm {
         }
         boolean isFree = false;
         //在特殊模板配置过的商品，这些商品不能参与通用模板免邮计算
+        List<Long> specialTemplateProduct = specialTemplateProduct(templateVos, p);
         List<Long> unFreeProduct = unFreeProduct(templateVos, payType, p);
 
         //1、-----判断通用模板是否满足包邮-------
@@ -61,7 +62,7 @@ public class PostageAlgorithm {
             if (!commonTemplateIsAllowFree) {
                 log.debug("通用模板【{}】, 支付方式{}， 不支持包邮", commonTemplateVo.getTemplateName(), payType);
             } else {
-                isFree = calCommonTemplateIsFree(commonTemplateVo, shopCartBase, p, payType, coupons, unFreeProduct);
+                isFree = calCommonTemplateIsFree(commonTemplateVo, shopCartBase, p, payType, coupons, specialTemplateProduct);
                 if (isFree) {
                     log.info("此订单满足{}元包邮，已到达包邮门槛，整单包邮", commonTemplateVo.getFreePostagePrice() / 100);
                     return true;
@@ -123,7 +124,6 @@ public class PostageAlgorithm {
         }
         return isFree;
     }
-
 
     //特殊模板，配置了该平台，该支付方式下，不能参与免邮计算的商品
     public static List<Long> unFreeProduct(List<PostageTemplateVo> templateVos, Integer payType, String p) {
@@ -193,11 +193,11 @@ public class PostageAlgorithm {
     /**
      * 根据平台，支付类型， 计算通用模板是否免邮
      */
-    public static boolean calCommonTemplateIsFree(PostageTemplateVo commonTemplates, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> unFreeProduct) {
+    public static boolean calCommonTemplateIsFree(PostageTemplateVo commonTemplates, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> specialTemplateProduct) {
         //1、获取购物车中，能够使用该模板计算运费的商品（排除所有的特殊模板商品）
         List<ShopCartItem> items = shopCartBase.getMerchants().stream()
                 .flatMap(cartItem -> cartItem.getItems().stream())
-                .filter(item -> !unFreeProduct.contains(item.getProductCode()))
+                .filter(item -> !specialTemplateProduct.contains(item.getProductCode()))
                 .collect(Collectors.toList());
 
         //2、计算是否达到 通用模板包邮门槛
