@@ -270,8 +270,14 @@ public class PostageAlgorithm {
         return deliveryTypeVos;
     }
 
-    public static Map<String, String> getPostageLabel(List<PostageTemplateVo> postageTemplateList, Integer skuCode, String platform) {
+    public static Map<String, String> getPostageLabel(List<PostageTemplateVo> postageTemplateList, Integer skuCode, String platform, List<Long> freePostageList) {
         Map<String, String> map = new HashMap<>(4);
+        if (freePostageList.contains(skuCode)) {
+            map.put("postageLabel", String.format("免邮商品"));
+            log.info("商品邮费标签提醒======={}", JSON.toJSONString(map));
+            return map;
+        }
+
         //获取特殊模板
         PostageTemplateVo specialTemplateVo = postageTemplateList.stream().filter(t -> t.getType() == 1)
                 .filter(t -> t.getPlatforms().contains(platform))
