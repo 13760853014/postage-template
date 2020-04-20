@@ -259,7 +259,7 @@ public class PostageAlgorithm {
                 .filter(t -> t.getPlatforms().contains(p))
                 .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
                 .flatMap(t -> t.getPostageTypes().stream())
-                .filter(pt -> payType.equals(pt.getPayType()))
+                .filter(pt -> payType.equals(pt.getPayType()) && pt.getFreeDeliveryTypeVos() != null)
                 .flatMap(pt -> pt.getFreeDeliveryTypeVos().stream())
                 .collect(Collectors.toList());
         log.debug("平台{}，支付类型{}，所有模板包邮的快递方式{}", p, payType, JSON.toJSONString(freeDeliveryTypeVos));
