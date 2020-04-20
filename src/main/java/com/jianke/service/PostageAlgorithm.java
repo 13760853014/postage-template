@@ -23,14 +23,8 @@ public class PostageAlgorithm {
      * 1、先计算通用模板
      * 2、再计算特殊模板
      */
-    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> freePostage, List<Long> coldChainSku) {
+    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> freePostage) {
         List<Long> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode()).distinct().collect(Collectors.toList());
-        for (Long productCode : itemProductCode) {
-            if (coldChainSku.contains(productCode)) {
-                log.info("客官，你买了一个冷链配送的商品，sku={}", productCode);
-                return false;
-            }
-        }
         for (Long productCode : itemProductCode) {
             if (freePostage.contains(productCode)) {
                 log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
@@ -217,14 +211,8 @@ public class PostageAlgorithm {
      * 1、不包邮的情况， 返回不包邮的快递方式中，价格最高的2个，快递类型不重复
      * 2、包邮的情况，   返回所有包邮的快递方式中， 交集最多的2个快递类型，否则返回顺丰
      */
-    public static List<DeliveryTypeVo> getPostageType(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, boolean isFree, List<Long> coldChainSku) {
+    public static List<DeliveryTypeVo> getPostageType(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, boolean isFree) {
         List<Long> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode()).distinct().collect(Collectors.toList());
-        for (Long productCode : itemProductCode) {
-            if (coldChainSku.contains(productCode)) {
-                log.info("客官，你买了一个冷链配送的商品，只能顺丰冷链配送哦");
-                return Arrays.asList(new DeliveryTypeVo("5","顺丰冷链", false, 8888L));
-            }
-        }
 
         System.out.println();
         if (!isFree) {

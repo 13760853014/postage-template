@@ -64,10 +64,9 @@ public class CalPostageService {
         List<Coupon> coupons = Arrays.asList(new Coupon("1000-1"), new Coupon("1000-2-11,12"));
         String platform = "app";
         List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
-        List<Long> coldChainSku = Arrays.asList(90L,91L,92L,93L,94L,95L);
         //判断商品是否免邮，已经获取对应的运费类型
-        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage, coldChainSku);
-        List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree, coldChainSku);
+        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage);
+        List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree);
         log.info("【最终结果】：  平台{}，支付方式{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, 99, isFree, JSON.toJSONString(deliveryTypeVos));
 
         //商品在详情页展示的邮费标签
