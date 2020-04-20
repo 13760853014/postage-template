@@ -81,8 +81,8 @@ public class CalPostageService {
         merchant.setMerchantCode(1).setMerchantName("健客自营");
         //编码-名称-数量-单个商品价格(分)
         List<ShopCartItem> list = new ArrayList<>();
-        list.add(new ShopCartItem("16-商品名称11-1-2000"));
-        list.add(new ShopCartItem("80-商品名称12-1-1000"));
+        list.add(new ShopCartItem("16-商品名称11-10-2000"));
+        //list.add(new ShopCartItem("80-商品名称12-1-1000"));
 //        list.add(new ShopCartItem("22-商品名称22-3-3000"));
 //        list.add(new ShopCartItem("23-商品名称23-3-3000"));
 //        list.add(new ShopCartItem("31-商品名称31-3-3000"));

@@ -261,7 +261,6 @@ public class PostageAlgorithm {
                 .flatMap(t -> t.getPostageTypes().stream())
                 .filter(pt -> payType.equals(pt.getPayType()))
                 .flatMap(pt -> pt.getFreeDeliveryTypeVos().stream())
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         log.debug("平台{}，支付类型{}，所有模板包邮的快递方式{}", p, payType, JSON.toJSONString(freeDeliveryTypeVos));
 
