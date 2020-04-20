@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Data
@@ -52,8 +53,17 @@ public class PostageTypeVo {
         }
         String[] freeArr = free.split("\\|");
         String[] unFreeArr = unfree.split("\\|");
-        this.freeDeliveryTypeVos = new DeliveryTypeVo().build(freeArr[0], freeArr[1]);
-        this.unFreeDeliveryTypeVos = new DeliveryTypeVo().build(unFreeArr[0], unFreeArr[1]);
+        if (freeArr.length == 2) {
+            this.freeDeliveryTypeVos = new DeliveryTypeVo().build(freeArr[0], freeArr[1]);
+        } else {
+            this.freeDeliveryTypeVos = Arrays.asList(new DeliveryTypeVo(freeArr[0]));
+        }
+
+        if (unFreeArr.length == 2) {
+            this.unFreeDeliveryTypeVos = new DeliveryTypeVo().build(unFreeArr[0], unFreeArr[1]);
+        } else {
+            this.unFreeDeliveryTypeVos = Arrays.asList(new DeliveryTypeVo(unFreeArr[0]));
+        }
     }
 
     public PostageTypeVo(String i, String unfree) {
