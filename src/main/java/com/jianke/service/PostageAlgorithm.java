@@ -236,10 +236,11 @@ public class PostageAlgorithm {
             //根据平台，支付类型，获取通用模板和特殊模板不包邮的快递方式（特殊模板需要根据购买的商品）
             List<DeliveryTypeVo> unFreeDeliveryTypeVos = templateVos.stream()
                     .filter(t -> t.getPlatforms().contains(p))
-                    .filter(t -> t.getType() == 0 || t.getProductCodes() == null || (itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
+                    .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
                     .flatMap(t -> t.getPostageTypes().stream())
                     .filter(pt -> payType.equals(pt.getPayType()))
                     .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             log.debug("平台{}，所有模板不包邮的快递方式{}", p, JSON.toJSONString(unFreeDeliveryTypeVos));
             //选出邮费最高的2个
@@ -256,9 +257,11 @@ public class PostageAlgorithm {
         //免邮的情况，选出交集数量最多的2个
         List<DeliveryTypeVo> freeDeliveryTypeVos = templateVos.stream()
                 .filter(t -> t.getPlatforms().contains(p))
+                .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
                 .flatMap(t -> t.getPostageTypes().stream())
-                .filter(pt -> payType.equals(pt.getPayType())&& pt.getIsAllowFree() == 1)
+                .filter(pt -> payType.equals(pt.getPayType()))
                 .flatMap(pt -> pt.getFreeDeliveryTypeVos().stream())
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         log.debug("平台{}，支付类型{}，所有模板包邮的快递方式{}", p, payType, JSON.toJSONString(freeDeliveryTypeVos));
 
@@ -270,17 +273,12 @@ public class PostageAlgorithm {
                 .forEachOrdered(e -> sortedMap.put(e.getKey(), e.getValue()));
         log.debug("所有包邮的快递方式, 计算交集并排序后的情况{}", JSON.toJSONString(sortedMap));
 
-        //选出交集大于2的前面的两个
+        //选出交集大于1的前面的两个
         Map<String, List<DeliveryTypeVo>> deliveryTypeMap = freeDeliveryTypeVos.stream().collect(groupingBy(DeliveryTypeVo::getId));
         List<DeliveryTypeVo> deliveryTypeVos = sortedMap.keySet().stream().filter(key -> sortedMap.get(key) > 1).map(key -> deliveryTypeMap.get(key).get(0)).limit(2).collect(Collectors.toList());
 
-        //如果只有一个交集，并且不是顺风，则添加顺风快递
-        if (deliveryTypeVos.size() == 1) {
-            if (!deliveryTypeVos.get(0).getLogisticsNum().equals("7")) {
-                deliveryTypeVos.add(new DeliveryTypeVo("7","顺丰", true, 0L));
-            }
-        } else if (deliveryTypeVos.size() == 0) {
-            //如果一个交集都没有，则返回顺丰快递（因为已经包邮了，顺丰快递兜底）
+        //如果一个交集都没有，则返回顺丰快递（因为已经包邮了，顺丰快递兜底）
+        if (deliveryTypeVos.size() == 0) {
             deliveryTypeVos.add(new DeliveryTypeVo("7","顺丰", true, 0L));
         }
         return deliveryTypeVos;
@@ -342,6 +340,8 @@ public class PostageAlgorithm {
         log.info("商品邮费标签提醒======={}", JSON.toJSONString(map));
         return map;
     }
+
+
 
 
 //
