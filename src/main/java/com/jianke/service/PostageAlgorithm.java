@@ -40,6 +40,7 @@ public class PostageAlgorithm {
         boolean isFree = false;
         //在特殊模板配置过的商品，这些商品不能参与通用模板免邮计算
         List<Long> specialTemplateProduct = specialTemplateProduct(templateVos, p);
+        //返回不允许包邮商品
         List<Long> unFreeProduct = unFreeProduct(templateVos, payType, p);
 
         //1、-----判断通用模板是否满足包邮-------
@@ -81,6 +82,7 @@ public class PostageAlgorithm {
                     .filter(pt -> pt.getIsAllowFree() == 1)
                     .findAny().orElse(null);
             boolean specialTemplateIsAllowFree = postageType != null;
+
             if (!specialTemplateIsAllowFree) {
                 log.debug("特殊模板【{}】, 支付方式{}， 不支持包邮", templateVo.getTemplateName(), payType);
                 continue;
@@ -220,7 +222,7 @@ public class PostageAlgorithm {
             List<DeliveryTypeVo> unFreeDeliveryTypeVos = templateVos.stream()
                     .filter(t -> t.getPlatforms().contains(p))
                     .flatMap(t -> t.getPostageTypes().stream())
-                    .filter(pt -> payType.equals(pt.getPayType()) && pt.getIsAllowFree() == 0)
+                    .filter(pt -> payType.equals(pt.getPayType()))
                     .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
                     .collect(Collectors.toList());
             log.debug("平台{}，支付类型{}，所有模板不包邮的快递方式{}", p, payType, JSON.toJSONString(unFreeDeliveryTypeVos));
