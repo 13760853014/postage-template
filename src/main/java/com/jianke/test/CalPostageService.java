@@ -26,7 +26,7 @@ public class CalPostageService {
         templateVo.setPlatforms(Arrays.asList("app")).setStatus(1);
         templateVo.setType(0).setTemplateName("允许包邮通用模板");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-        templateVo.addType(new PostageTypeVo("1","7-顺丰-8|6-申通-9", "7-顺丰-10|5-EMS-18"));
+        templateVo.addType(new PostageTypeVo("1","7-顺丰-0|6-申通-0", "7-顺丰-9|5-EMS-18"));
 //        templateVo.addType(new PostageTypeVo("0","7-顺丰-10|5-EMS-18"));
         log.info(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
@@ -40,7 +40,8 @@ public class CalPostageService {
         templateVo.setType(1).setTemplateName("16,18特殊模板69包邮");
         templateVo.setProductCodes(Arrays.asList(16,18));
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|5-EMS-0", "7-顺丰-8"));
+//        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|5-EMS-0", "6-申通-8|5-EMS-15"));
+        templateVo.addType(new PostageTypeVo("0", "6-申通-8|5-EMS-15"));
         log.info(templateVo.getTemplateName() + "-----\n" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -80,8 +81,8 @@ public class CalPostageService {
         merchant.setMerchantCode(1).setMerchantName("健客自营");
         //编码-名称-数量-单个商品价格(分)
         List<ShopCartItem> list = new ArrayList<>();
-        list.add(new ShopCartItem("15-商品名称11-1-4000"));
-//        list.add(new ShopCartItem("12-商品名称12-5-4000"));
+        list.add(new ShopCartItem("16-商品名称11-1-2000"));
+        list.add(new ShopCartItem("80-商品名称12-1-1000"));
 //        list.add(new ShopCartItem("22-商品名称22-3-3000"));
 //        list.add(new ShopCartItem("23-商品名称23-3-3000"));
 //        list.add(new ShopCartItem("31-商品名称31-3-3000"));
