@@ -40,8 +40,8 @@ public class CalPostageService {
         templateVo.setType(1).setTemplateName("16,18特殊模板69包邮");
         templateVo.setProductCodes(Arrays.asList(16,18));
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-//        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|5-EMS-0", "6-申通-8|5-EMS-15"));
-        templateVo.addType(new PostageTypeVo("0", "6-申通-8|5-EMS-15"));
+        templateVo.addType(new PostageTypeVo("1", "7-申通-0|5-EMS-0", "6-申通-8|5-EMS-15"));
+//        templateVo.addType(new PostageTypeVo("0", "6-申通-8|5-EMS-15"));
         log.info(templateVo.getTemplateName() + "-----\n" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -65,7 +65,7 @@ public class CalPostageService {
         //优惠券金额-类型-商品（1全场券，2商品券， 商品用,隔开）
         List<Coupon> coupons = Arrays.asList(new Coupon("1000-1"), new Coupon("1000-2-11,12"));
         String platform = "app";
-        List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
+        List<Long> freePostage = Arrays.asList(16L,80L,81L,82L,83L,84L,85L);
         //判断商品是否免邮，已经获取对应的运费类型
         boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage);
         List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree);
@@ -81,8 +81,8 @@ public class CalPostageService {
         merchant.setMerchantCode(1).setMerchantName("健客自营");
         //编码-名称-数量-单个商品价格(分)
         List<ShopCartItem> list = new ArrayList<>();
-        list.add(new ShopCartItem("16-商品名称11-10-2000"));
-        //list.add(new ShopCartItem("80-商品名称12-1-1000"));
+//        list.add(new ShopCartItem("16-商品名称11-10-2000"));
+        list.add(new ShopCartItem("16-商品名称12-1-1000"));
 //        list.add(new ShopCartItem("22-商品名称22-3-3000"));
 //        list.add(new ShopCartItem("23-商品名称23-3-3000"));
 //        list.add(new ShopCartItem("31-商品名称31-3-3000"));
