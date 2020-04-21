@@ -91,12 +91,13 @@ public class PostageAlgorithm {
             }
 
             hasCalTemplateSkus.addAll(templateVo.getProductCodes());
+            List<Long> higherTepmlateSkus = allTemplateSkus.stream().filter(t -> !hasCalTemplateSkus.contains(t.intValue())).collect(Collectors.toList());
 
             //获取购物车中，能够使用该模板计算运费的商品，
             List<ShopCartItem> items;
             if (!commonTemplateIsAllowFree) {
                 //通用模板不支持包邮, 只有在该模板配置了的商品，才能去计算包邮门槛
-                List<Long> higherTepmlateSkus = allTemplateSkus.stream().filter(t -> hasCalTemplateSkus.contains(t.intValue())).collect(Collectors.toList());
+
                 items = shopCartBase.getMerchants().stream()
                         .flatMap(cartItem -> cartItem.getItems().stream())
                         .filter(item -> !unFreeProduct.contains(item.getProductCode()))
@@ -105,7 +106,6 @@ public class PostageAlgorithm {
                         .collect(Collectors.toList());
             } else {
                 //通用模板支持包邮，需要减去不包邮商品和高级特殊模板配置了的商品
-                List<Long> higherTepmlateSkus = allTemplateSkus.stream().filter(t -> hasCalTemplateSkus.contains(t.intValue())).collect(Collectors.toList());
                 items = shopCartBase.getMerchants().stream()
                         .flatMap(cartItem -> cartItem.getItems().stream())
                         .filter(item -> !unFreeProduct.contains(item.getProductCode()))
