@@ -67,10 +67,11 @@ public class PostageAlgorithm {
         }
 
         //2、-----判断特殊模板是否满足包邮-------
-        //特殊模板按门槛由低到高排序
+        //特殊模板按门槛由低到高排序（只对购物车商品对应的模板排序）
         List<PostageTemplateVo> sortTemplates = templateVos.stream()
                 .filter(t -> t.getPlatforms().contains(p))
                 .filter(t -> t.getType() == 1)
+                .filter(t -> t.getProductCodes().stream().anyMatch(code -> itemProductCode.contains(code.longValue())))
                 .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
                 .collect(Collectors.toList());
         Map<String, List<Integer>> templateSkuMap = sortTemplates.stream().collect(Collectors.toMap(PostageTemplateVo::getId, PostageTemplateVo::getProductCodes, (p1, p2) -> p2));
@@ -78,16 +79,17 @@ public class PostageAlgorithm {
         //2、遍历所有特殊模板，一个个判断是否可以免邮
         Set<Integer> hasCalTemplateSkus = new HashSet<>();
         for (PostageTemplateVo templateVo : sortTemplates) {
-            PostageTypeVo postageType = commonTemplateVo.getPostageTypes().stream()
+            PostageTypeVo postageType = templateVo.getPostageTypes().stream()
                     .filter(pt -> pt.getPayType().equals(payType))
                     .filter(pt -> pt.getIsAllowFree() == 1)
                     .findAny().orElse(null);
             boolean specialTemplateIsAllowFree = postageType != null;
 
             if (!specialTemplateIsAllowFree) {
-                log.debug("特殊模板【{}】, 支付方式{}， 不支持包邮", templateVo.getTemplateName(), payType);
+                log.debug("特殊模板【{}】， 不支持包邮", templateVo.getTemplateName());
                 continue;
             }
+
             hasCalTemplateSkus.addAll(templateVo.getProductCodes());
 
             //获取购物车中，能够使用该模板计算运费的商品，
@@ -114,7 +116,7 @@ public class PostageAlgorithm {
             List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
             long itemAmount = calItemTotalNum(items);
             long couponValue = templateUseCouponAmount(items, coupons);
-            isFree = itemAmount - couponValue > templateVo.getFreePostagePrice();
+            isFree = itemAmount - couponValue >= templateVo.getFreePostagePrice();
             log.info("特殊模板【{}】，计算运费商品{}， 总金额{}分, 可用优惠券金额{}分, 最低免邮金额{}分， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, couponValue, templateVo.getFreePostagePrice(), isFree);
             if (isFree) {
                 log.info("此订单满足{}元包邮，已到达特殊模板包邮门槛，整单包邮", templateVo.getFreePostagePrice() / 100);
