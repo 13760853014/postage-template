@@ -62,6 +62,8 @@ public class PostageAlgorithm {
                 if (isFree) {
                     log.info("此订单满足{}元包邮，已到达通用包邮门槛，整单包邮", commonTemplateVo.getFreePostagePrice() / 100);
                     return true;
+                }else{
+                    log.info("通用模板-此订单不满足{}元包邮", commonTemplateVo.getFreePostagePrice() / 100);
                 }
             }
         }
@@ -219,7 +221,7 @@ public class PostageAlgorithm {
         //2、计算是否达到 通用模板包邮门槛
         long itemAmount = calItemTotalNum(items);
         long couponValue = templateUseCouponAmount(items, coupons);
-        boolean isFree = itemAmount - couponValue > commonTemplates.getFreePostagePrice();
+        boolean isFree = itemAmount - couponValue >= commonTemplates.getFreePostagePrice();
         List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
         log.info("通用模板【{}】，计算运费商品{}， 总金额{}分, 可用优惠券金额{}分, 最低免邮金额{}分， 是否免邮={}", commonTemplates.getTemplateName(), skuCodes, itemAmount, couponValue, commonTemplates.getFreePostagePrice(), isFree);
         return isFree;

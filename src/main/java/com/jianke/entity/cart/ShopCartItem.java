@@ -149,14 +149,16 @@ public class ShopCartItem implements Serializable{
                 .setCombineId(id.longValue())
                 .setProductCode(Long.valueOf(param[0]))
                 .setProductName(param[1])
-                .setCombineNum(Integer.valueOf(param[2]))
-                .setActualPrice(Long.valueOf(param[3]));
+                .setProductNum(Integer.parseInt(param[2]))
+                .setCombineNum(Integer.parseInt(param[3]))
+                .setActualPrice(Long.valueOf(param[4]));
         ShopCartItem item1 = new ShopCartItem()
                 .setCombineId(id.longValue())
                 .setProductCode(Long.valueOf(param1[0]))
                 .setProductName(param1[1])
-                .setCombineNum(Integer.valueOf(param1[2]))
-                .setActualPrice(Long.valueOf(param1[3]));
+                .setProductNum(Integer.parseInt(param1[2]))
+                .setCombineNum(Integer.parseInt(param1[3]))
+                .setActualPrice(Long.valueOf(param1[4]));
         return Arrays.asList(item, item1);
     }
 }
