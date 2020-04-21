@@ -254,14 +254,22 @@ public class PostageAlgorithm {
             return deliveryTypeVos.stream().limit(2).collect(Collectors.toList());
         }
 
-        //免邮的情况，选出交集数量最多的2个
-        List<DeliveryTypeVo> freeDeliveryTypeVos = templateVos.stream()
+        //根据订单产品，匹配对应的模板配置（通用模板和允许包邮的特殊模板）
+        List<PostageTemplateVo> commonTemplateVos = templateVos.stream()
                 .filter(t -> t.getPlatforms().contains(p))
                 .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
-                .flatMap(t -> t.getPostageTypes().stream())
-                .filter(pt -> payType.equals(pt.getPayType()) && pt.getFreeDeliveryTypeVos() != null)
-                .flatMap(pt -> pt.getFreeDeliveryTypeVos().stream())
+                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                 .collect(Collectors.toList());
+
+        int size = commonTemplateVos.size();
+        if (size == 0) {
+            return Arrays.asList(new DeliveryTypeVo("7","顺丰", true, 0L));
+        }
+        List<DeliveryTypeVo> freeDeliveryTypeVos = commonTemplateVos.stream().flatMap(t -> t.getPostageTypes().stream()).filter(pt -> payType.equals(pt.getPayType())).flatMap(pt -> pt.getFreeDeliveryTypeVos().stream()).collect(Collectors.toList());
+        if (size == 1) {
+            return CollectionUtils.isNotEmpty(freeDeliveryTypeVos) ? freeDeliveryTypeVos : Arrays.asList(new DeliveryTypeVo("7","顺丰", true, 0L));
+        }
+        //选出交集数量最多的2个
         log.debug("平台{}，支付类型{}，所有模板包邮的快递方式{}", p, payType, JSON.toJSONString(freeDeliveryTypeVos));
 
         Map<String, Long> sortedMap = new LinkedHashMap<>();
