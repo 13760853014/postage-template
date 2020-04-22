@@ -1,7 +1,6 @@
 package com.jianke.test;
 
 import com.alibaba.fastjson.JSON;
-import com.jianke.entity.Coupon;
 import com.jianke.entity.cart.Merchant;
 import com.jianke.entity.cart.ShopCartBase;
 import com.jianke.entity.cart.ShopCartItem;
@@ -15,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CalPostageService {
     private static final Logger log = LoggerFactory.getLogger(CalPostageService.class);
@@ -64,28 +65,31 @@ public class CalPostageService {
         List<String> postageTip = new ArrayList<>(2);
         List<PostageTemplateVo> templateVos = Arrays.asList(commonTemplate1(),specialTemplate2(),specialTemplate3());
         ShopCartBase shopCartBase = buildShopCartBase();
-        //优惠券金额-类型-商品（1全场券，2商品券， 商品用,隔开）
-        List<Coupon> coupons = Arrays.asList(new Coupon("1000-1"), new Coupon("1000-2-11,12"));
         String platform = "app";
         List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
         //判断商品是否免邮，已经获取对应的运费类型
-        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage, postageTip);
+        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, freePostage, postageTip);
         List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree);
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
 
         if (isFree) {
             log.info("【返回的运费计算提示语】 {}", postageTip.isEmpty() ? "" : postageTip.get(0));
         } else {
-            //不包邮的情况下，需要重新计算运费提示语
-            String postageDesc = PostageAlgorithm.postageDesc(templateVos, shopCartBase, platform, 99);
-            log.info("【返回的运费计算提示语】 {}", postageDesc);
-            DeliveryTypeVo deliveryTypeVo = deliveryTypeVos.get(0);
-            log.info("根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVo.getLogisticsName(), deliveryTypeVo.getDeliveryPrice() / 100);
+            Map<Integer, String> itemProductMap = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), item -> item.getProductName(), (i, j) -> i));
+            List<Integer> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode().intValue()).distinct().collect(Collectors.toList());
 
+            //不包邮的情况下，需要重新计算运费提示语
+            String postageDesc = PostageAlgorithm.postageDesc(templateVos, itemProductMap, itemProductCode, platform, 99);
+            log.info("【返回的运费计算提示语】 {}", postageDesc);
+            if (deliveryTypeVos.size() == 1) {
+                log.info("【返回的快递方式提示语】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
+            } else {
+                String deliveryTypeDesc = PostageAlgorithm.deliveryTypeDesc(templateVos, itemProductMap, itemProductCode, platform, 99, deliveryTypeVos.get(0));
+                log.info("【返回的快递方式提示语】 {}", deliveryTypeDesc);
+            }
         }
         //商品在详情页展示的邮费标签
         PostageAlgorithm.getPostageLabel(templateVos, 80, platform);
-
     }
 
 

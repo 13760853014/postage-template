@@ -1,7 +1,6 @@
 package com.jianke.service;
 
 import com.alibaba.fastjson.JSON;
-import com.jianke.entity.Coupon;
 import com.jianke.entity.cart.ShopCartBase;
 import com.jianke.entity.cart.ShopCartItem;
 import com.jianke.vo.DeliveryTypeVo;
@@ -24,7 +23,7 @@ public class PostageAlgorithm {
      * 1、先计算通用模板
      * 2、再计算特殊模板
      */
-    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> freePostage, List<String> postageTip) {
+    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Long> freePostage, List<String> postageTip) {
         List<Long> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode()).distinct().collect(Collectors.toList());
         for (Long productCode : itemProductCode) {
             if (freePostage.contains(productCode)) {
@@ -62,7 +61,7 @@ public class PostageAlgorithm {
             if (!commonTemplateIsAllowFree) {
                 log.debug("通用模板【{}】， 不支持包邮", commonTemplateVo.getTemplateName());
             } else {
-                isFree = calCommonTemplateIsFree(commonTemplateVo, shopCartBase, p, payType, coupons, specialTemplateProduct);
+                isFree = calCommonTemplateIsFree(commonTemplateVo, shopCartBase, p, payType, specialTemplateProduct);
                 if (isFree) {
                     log.info("此订单满足{}元包邮，已到达通用包邮门槛，整单包邮", commonTemplateVo.getFreePostagePrice() / 100);
                     postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", commonTemplateVo.getFreePostagePrice() / 100));
@@ -102,7 +101,6 @@ public class PostageAlgorithm {
             List<ShopCartItem> items;
             if (!commonTemplateIsAllowFree) {
                 //通用模板不支持包邮, 只有在该模板配置了的商品，才能去计算包邮门槛
-
                 items = shopCartBase.getMerchants().stream()
                         .flatMap(cartItem -> cartItem.getItems().stream())
                         .filter(item -> !unFreeProduct.contains(item.getProductCode()))
@@ -120,9 +118,8 @@ public class PostageAlgorithm {
 
             List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
             long itemAmount = calItemTotalNum(items);
-            long couponValue = templateUseCouponAmount(items, coupons);
-            isFree = itemAmount - couponValue >= templateVo.getFreePostagePrice();
-            log.info("特殊模板【{}】，计算运费商品{}， 总金额{}分, 可用优惠券金额{}分, 最低免邮金额{}分， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, couponValue, templateVo.getFreePostagePrice(), isFree);
+            isFree = itemAmount >= templateVo.getFreePostagePrice();
+            log.info("特殊模板【{}】，计算运费商品{}， 总金额{}分, 最低免邮金额{}分， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, templateVo.getFreePostagePrice(), isFree);
             if (isFree) {
                 log.info("此订单满足{}元包邮，已到达特殊模板包邮门槛，整单包邮", templateVo.getFreePostagePrice() / 100);
                 postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", templateVo.getFreePostagePrice() / 100));
@@ -152,7 +149,7 @@ public class PostageAlgorithm {
                 .filter(t -> t.getType() == 1)
                 .filter(t -> t.getPlatforms().contains(p))
                 .flatMap(t -> t.getProductCodes().stream())
-                .map(sku -> sku.longValue())
+                .map(Integer::longValue)
                 .collect(Collectors.toList());
         log.info("在特殊模板配置的商品：{}", specialTemplateProduct);
         return specialTemplateProduct;
@@ -165,36 +162,6 @@ public class PostageAlgorithm {
         return commonTemplate;
     }
 
-
-    /**
-     * 该模板能够使用优惠券的金额
-     * @param items  该模板能够使用的商品
-     * @param coupons
-     * @return useAmount  需要减去的 优惠券总金额
-     */
-    public static long templateUseCouponAmount(List<ShopCartItem> items, List<Coupon> coupons) {
-        if (CollectionUtils.isEmpty(coupons)) {
-            return 0;
-        }
-        //需要减去的 优惠券总金额
-        long useAmount = 0;
-        //该模板能够用来计算门槛的商品（已经排除掉不能参与计算门槛的商品了）
-        List<Long> itemCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
-        for (Coupon coupon : coupons) {
-            //type = 1是全场券，该优惠券金额需要减去（先累加起来）
-            if (coupon.getType() == 1) {
-                useAmount = useAmount + coupon.getCouponValue();
-            } else {
-                // 商品券，该模板能够用来计算门槛的商品中，是否包含在商品券中 （如果是，则该优惠券金额也要累计）
-                List<Long> contains = itemCodes.stream().filter(sku -> coupon.getProductCodes().contains(sku)).collect(Collectors.toList());
-                if (!CollectionUtils.isEmpty(contains)) {
-                    useAmount = useAmount + coupon.getCouponValue();
-                    log.info("购物车商品{}，可以使用商品券{}", contains, coupons);
-                }
-            }
-        }
-        return useAmount;
-    }
 
     public static long calItemTotalNum(List<ShopCartItem> items) {
         long sum = 0;
@@ -211,7 +178,7 @@ public class PostageAlgorithm {
     /**
      * 根据平台，支付类型， 计算通用模板是否免邮
      */
-    public static boolean calCommonTemplateIsFree(PostageTemplateVo commonTemplates, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> specialTemplateProduct) {
+    public static boolean calCommonTemplateIsFree(PostageTemplateVo commonTemplates, ShopCartBase shopCartBase, String p, Integer payType, List<Long> specialTemplateProduct) {
         //1、获取购物车中，能够使用该模板计算运费的商品（排除所有的特殊模板商品）
         List<ShopCartItem> items = shopCartBase.getMerchants().stream()
                 .flatMap(cartItem -> cartItem.getItems().stream())
@@ -224,10 +191,9 @@ public class PostageAlgorithm {
 
         //2、计算是否达到 通用模板包邮门槛
         long itemAmount = calItemTotalNum(items);
-        long couponValue = templateUseCouponAmount(items, coupons);
-        boolean isFree = itemAmount - couponValue > commonTemplates.getFreePostagePrice();
+        boolean isFree = itemAmount >= commonTemplates.getFreePostagePrice();
         List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
-        log.info("通用模板【{}】，计算运费商品{}， 总金额{}分, 可用优惠券金额{}分, 最低免邮金额{}分， 是否免邮={}", commonTemplates.getTemplateName(), skuCodes, itemAmount, couponValue, commonTemplates.getFreePostagePrice(), isFree);
+        log.info("通用模板【{}】，计算运费商品{}， 总金额{}分, 最低免邮金额{}分， 是否免邮={}", commonTemplates.getTemplateName(), skuCodes, itemAmount, commonTemplates.getFreePostagePrice(), isFree);
         return isFree;
     }
 
@@ -238,7 +204,6 @@ public class PostageAlgorithm {
      */
     public static List<DeliveryTypeVo> getPostageType(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, boolean isFree) {
         List<Integer> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode().intValue()).distinct().collect(Collectors.toList());
-
         System.out.println();
         if (!isFree) {
             //根据平台，支付类型，获取通用模板和特殊模板不包邮的快递方式（特殊模板需要根据购买的商品）
@@ -357,12 +322,7 @@ public class PostageAlgorithm {
     }
 
 
-
-
-
-    public static String postageDesc(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType) {
-        Map<Integer, String> itemProductMap = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), item -> item.getProductName(), (i, j) -> i));
-        List<Integer> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode().intValue()).distinct().collect(Collectors.toList());
+    public static String postageDesc(List<PostageTemplateVo> templateVos, Map<Integer, String> itemProductMap, List<Integer> itemProductCode, String p, Integer payType) {
         //根据订单产品，匹配所有的允许包邮模板（通用模板和所有允许包邮的特殊模板）
         List<PostageTemplateVo> freeTemplateVos = templateVos.stream()
                 .filter(t -> t.getPlatforms().contains(p))
@@ -417,5 +377,28 @@ public class PostageAlgorithm {
         }
         info.append("当前未满足此条件。");
         return info.toString();
+    }
+
+    public static String deliveryTypeDesc(List<PostageTemplateVo> templateVos, Map<Integer, String> itemProductMap, List<Integer> itemProductCode, String p, Integer payType, DeliveryTypeVo deliveryTypeVo) {
+        //先在特殊模板找到一个包含此快递方式的商品
+        Integer productCode = templateVos.stream()
+                .filter(t -> t.getPlatforms().contains(p))
+                .filter(t -> t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains))
+                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getUnFreeDeliveryTypeVos().stream().anyMatch(dt -> dt.getId().equals(deliveryTypeVo.getId()))))
+                .flatMap(t -> t.getProductCodes().stream())
+                .findFirst().orElse(null);
+        if (productCode != null) {
+            //特殊模板找不到，在通用模板找一个
+            productCode = templateVos.stream()
+                    .filter(t -> t.getType() == 1)
+                    .filter(t -> t.getPlatforms().contains(p))
+                    .flatMap(t -> t.getProductCodes().stream())
+                    .filter(code -> !itemProductCode.contains(code))
+                    .findFirst().orElse(null);
+        }
+        if (productCode == null) {
+            return String.format("【返回的快递方式提示语】  根据您选择的支付方式（在线支付）和快递方式（%s）, 收取%s元运费", deliveryTypeVo.getLogisticsName(), deliveryTypeVo.getDeliveryPrice() / 100);
+        }
+        return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%元收取。", deliveryTypeVo.getLogisticsName(), itemProductMap.get(productCode), deliveryTypeVo.getDeliveryPrice() / 100);
     }
 }
