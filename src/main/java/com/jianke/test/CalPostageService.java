@@ -87,7 +87,8 @@ public class CalPostageService {
     }
 
     public static void main(String[] args) {
-        List<PostageTemplateVo> templateVos = Arrays.asList(commonTemplate1(),specialTemplate2(),specialTemplate3(),specialTemplate4(),specialTemplate5());
+        List<String> postageTip = new ArrayList<>(2);
+        List<PostageTemplateVo> templateVos = Arrays.asList(commonTemplate1(),specialTemplate2(),specialTemplate3());
         ShopCartBase shopCartBase = buildShopCartBase();
         //优惠券金额-类型-商品（1全场券，2商品券， 商品用,隔开）
 //        List<Coupon> coupons = Arrays.asList(new Coupon("1000-1"), new Coupon("1000-2-11,12"));
@@ -95,13 +96,25 @@ public class CalPostageService {
         String platform = "app";
         List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
         //判断商品是否免邮，已经获取对应的运费类型
-        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage);
+        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, coupons, freePostage, postageTip);
         List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree);
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
 
+        if (isFree) {
+            log.info("【返回的运费计算提示语】 {}", postageTip.isEmpty() ? "" : postageTip.get(0));
+        } else {
+            //不包邮的情况下，需要重新计算运费提示语
+            String postageDesc = PostageAlgorithm.postageDesc(templateVos, shopCartBase, platform, 99);
+            log.info("【返回的运费计算提示语】 {}", postageDesc);
+            DeliveryTypeVo deliveryTypeVo = deliveryTypeVos.get(0);
+            log.info("根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVo.getLogisticsName(), deliveryTypeVo.getDeliveryPrice() / 100);
+
+        }
         //商品在详情页展示的邮费标签
         PostageAlgorithm.getPostageLabel(templateVos, 80, platform);
+
     }
+
 
     public static ShopCartBase buildShopCartBase() {
         Merchant merchant = new Merchant();
@@ -116,6 +129,12 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("31-商品名称31-1-5000"));
 //        list.addAll(new ShopCartItem().combine("31-商品31-1-1-1000","80-商品1-1-1-1000", 100001));
 //        list.addAll(new ShopCartItem().combine("31-商品31-1-1-500","16-商品21-1-1-3000", 100002));
+        list.add(new ShopCartItem("16-商品名称11-3-2000"));
+        //list.add(new ShopCartItem("17-商品名称12-1-1000"));
+        //list.add(new ShopCartItem("18-商品名称22-3-3000"));
+//        list.add(new ShopCartItem("23-商品名称23-3-3000"));
+//        list.add(new ShopCartItem("31-商品名称31-3-3000"));
+        //list.addAll(new ShopCartItem().combine("31-商品31-3-3000","31-商品31-3-3000", 100001));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
         return shop;
