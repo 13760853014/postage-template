@@ -27,7 +27,7 @@ public class CalPostageService {
         templateVo.setType(0).setTemplateName("允许包邮通用模板");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
         templateVo.addType(new PostageTypeVo("1","7-顺丰-0|6-EMS-0", "7-顺丰-9|5-EMS-18"));
-//        templateVo.addType(new PostageTypeVo("0","7-顺丰-10|5-EMS-18"));
+//        templateVo.addType(new PostageTypeVo("0","7-顺丰-10|5-EMS-8"));
         log.info(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -54,8 +54,8 @@ public class CalPostageService {
         templateVo.setType(1).setTemplateName("18特殊模板60包邮");
         templateVo.setProductCodes(Arrays.asList(18));
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-//        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|6-申通-0", "7-顺丰-8|5-EMS-15"));
-        templateVo.addType(new PostageTypeVo("0", "6-申通-8|5-EMS-15"));
+        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|6-申通-0", "7-顺丰-8|5-EMS-15"));
+//        templateVo.addType(new PostageTypeVo("0", "6-申通-8|5-EMS-15"));
         log.info(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -90,7 +90,8 @@ public class CalPostageService {
         List<PostageTemplateVo> templateVos = Arrays.asList(commonTemplate1(),specialTemplate2(),specialTemplate3(),specialTemplate4(),specialTemplate5());
         ShopCartBase shopCartBase = buildShopCartBase();
         //优惠券金额-类型-商品（1全场券，2商品券， 商品用,隔开）
-        List<Coupon> coupons = Arrays.asList(new Coupon("1000-1"), new Coupon("1000-2-11,12"));
+//        List<Coupon> coupons = Arrays.asList(new Coupon("1000-1"), new Coupon("1000-2-11,12"));
+        List<Coupon> coupons = Arrays.asList(new Coupon("1000-1-18"));
         String platform = "app";
         List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
         //判断商品是否免邮，已经获取对应的运费类型
@@ -108,13 +109,13 @@ public class CalPostageService {
         merchant.setMerchantCode(1).setMerchantName("健客自营");
         //编码-名称-商品数量-搭配数量-单个商品价格(分)
         List<ShopCartItem> list = new ArrayList<>();
-        list.add(new ShopCartItem("16-商品名称11-6-1000"));
-        list.add(new ShopCartItem("17-商品名称12-1-1000"));
-        list.add(new ShopCartItem("27-商品名称22-1-1000"));
-        list.add(new ShopCartItem("18-商品名称23-1-3000"));
-        list.add(new ShopCartItem("31-商品名称31-1-3000"));
-        list.addAll(new ShopCartItem().combine("31-商品31-1-1-500","18-商品1-1-1-1000", 100001));
-        list.addAll(new ShopCartItem().combine("31-商品31-1-1-1500","16-商品21-3-1-3000", 100002));
+//        list.add(new ShopCartItem("18-商品名称11-6-1000"));
+//        list.add(new ShopCartItem("17-商品名称12-10-1000"));
+//        list.add(new ShopCartItem("27-商品名称22-1-1000"));
+        list.add(new ShopCartItem("18-商品名称23-1-6000"));
+//        list.add(new ShopCartItem("31-商品名称31-1-5000"));
+//        list.addAll(new ShopCartItem().combine("31-商品31-1-1-1000","80-商品1-1-1-1000", 100001));
+//        list.addAll(new ShopCartItem().combine("31-商品31-1-1-500","16-商品21-1-1-3000", 100002));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
         return shop;
