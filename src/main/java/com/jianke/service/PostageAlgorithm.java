@@ -165,35 +165,7 @@ public class PostageAlgorithm {
     }
 
 
-    /**
-     * 该模板能够使用优惠券的金额
-     * @param items  该模板能够使用的商品
-     * @param coupons
-     * @return useAmount  需要减去的 优惠券总金额
-     */
-    public static long templateUseCouponAmount(List<ShopCartItem> items, List<Coupon> coupons) {
-        if (CollectionUtils.isEmpty(coupons)) {
-            return 0;
-        }
-        //需要减去的 优惠券总金额
-        long useAmount = 0;
-        //该模板能够用来计算门槛的商品（已经排除掉不能参与计算门槛的商品了）
-        List<Long> itemCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
-        for (Coupon coupon : coupons) {
-            //type = 1是全场券，该优惠券金额需要减去（先累加起来）
-            if (coupon.getType() == 1) {
-                useAmount = useAmount + coupon.getCouponValue();
-            } else {
-                // 商品券，该模板能够用来计算门槛的商品中，是否包含在商品券中 （如果是，则该优惠券金额也要累计）
-                List<Long> contains = itemCodes.stream().filter(sku -> coupon.getProductCodes().contains(sku)).collect(Collectors.toList());
-                if (!CollectionUtils.isEmpty(contains)) {
-                    useAmount = useAmount + coupon.getCouponValue();
-                    log.info("购物车商品{}，可以使用商品券{}", contains, coupons);
-                }
-            }
-        }
-        return useAmount;
-    }
+
 
     public static long calItemTotalNum(List<ShopCartItem> items) {
         long sum = 0;
