@@ -9,6 +9,7 @@ import com.jianke.vo.PostageTemplateVo;
 import com.jianke.vo.PostageTypeVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,11 +24,14 @@ public class PostageAlgorithm {
      * 1、先计算通用模板
      * 2、再计算特殊模板
      */
-    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> freePostage) {
+    public static boolean calPostageIsFree(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType, List<Coupon> coupons, List<Long> freePostage, List<String> postageTip) {
         List<Long> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode()).distinct().collect(Collectors.toList());
         for (Long productCode : itemProductCode) {
             if (freePostage.contains(productCode)) {
                 log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
+                PostageTemplateVo commonTemplate = templateVos.stream().filter(t -> t.getPlatforms().contains(p)).filter(t -> t.getType() == 0).findFirst().orElse(null);
+                String freePrice = commonTemplate != null ? String.valueOf(commonTemplate.getFreePostagePrice() / 100) : "99";
+                postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", freePrice));
                 return true;
             }
         }
@@ -61,6 +65,7 @@ public class PostageAlgorithm {
                 isFree = calCommonTemplateIsFree(commonTemplateVo, shopCartBase, p, payType, coupons, specialTemplateProduct);
                 if (isFree) {
                     log.info("此订单满足{}元包邮，已到达通用包邮门槛，整单包邮", commonTemplateVo.getFreePostagePrice() / 100);
+                    postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", commonTemplateVo.getFreePostagePrice() / 100));
                     return true;
                 }
             }
@@ -120,6 +125,7 @@ public class PostageAlgorithm {
             log.info("特殊模板【{}】，计算运费商品{}， 总金额{}分, 可用优惠券金额{}分, 最低免邮金额{}分， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, couponValue, templateVo.getFreePostagePrice(), isFree);
             if (isFree) {
                 log.info("此订单满足{}元包邮，已到达特殊模板包邮门槛，整单包邮", templateVo.getFreePostagePrice() / 100);
+                postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", templateVo.getFreePostagePrice() / 100));
                 break;
             }
         }
@@ -353,38 +359,63 @@ public class PostageAlgorithm {
 
 
 
-//
-//    public static void postageDesc(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType) {
-//        List<PostageTemplateVo> templateVoList = templateVos.stream()
-//                .filter(t -> t.getPlatforms().contains(p)).collect(Collectors.toList());
-//        if (templateVoList.size() == 1) {
-//            log.info("不包邮金额说明: 全部商品需满{}元包邮，当前未满足此条件。", templateVoList.get(0).getFreePostagePrice() / 100);
-//            return;
-//        }
-//
-//        StringBuilder info = new StringBuilder();
-//        List<Long> unFreeProduct = unFreeProduct(templateVos, payType, p);
-//        if (!CollectionUtils.isEmpty(unFreeProduct)) {
-//            Map<Long, String> itemMap = shopCartBase.getMerchants().stream()
-//                    .flatMap(shopCart -> shopCart.getItems().stream())
-//                    .collect(Collectors.toMap(item -> item.getProductCode(), item -> item.getProductName(), (i1, i2) -> i2));
-//            info.append("此订单中");
-//            for (Long skuCode : unFreeProduct) {
-//                info.append("此订单中" + itemMap.get(skuCode) + ",不参与包邮");
-//            }
-//            info.append("不参与包邮");
-//        }
-//
-//        //1、筛选特殊配置模板
-//        List<PostageTemplateVo> specialTemplates = templateVos.stream()
-//                .filter(t -> t.getType() == 1)
-//                .filter(t -> t.getPlatforms().contains(p))
-//                .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
-//                .collect(Collectors.toList());
-//
-//        for (PostageTemplateVo templateVo : specialTemplates) {
-//
-//        }
-//
-//    }
+
+    public static String postageDesc(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p, Integer payType) {
+        Map<Integer, String> itemProductMap = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), item -> item.getProductName(), (i, j) -> i));
+        List<Integer> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode().intValue()).distinct().collect(Collectors.toList());
+        //根据订单产品，匹配所有的允许包邮模板（通用模板和所有允许包邮的特殊模板）
+        List<PostageTemplateVo> freeTemplateVos = templateVos.stream()
+                .filter(t -> t.getPlatforms().contains(p))
+                .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
+                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
+                .collect(Collectors.toList());
+        //根据订单产品，匹配所有的不允许包邮模板配置
+        List<PostageTemplateVo> unfreeTemplateVos = templateVos.stream()
+                .filter(t -> t.getPlatforms().contains(p))
+                .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
+                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 0))
+                .collect(Collectors.toList());
+
+        //不包邮的商品名称
+        String unFreeSkuNames = null;
+        if (!CollectionUtils.isEmpty(unfreeTemplateVos)) {
+            unFreeSkuNames = unfreeTemplateVos.stream()
+                    .flatMap(t -> t.getProductCodes().stream())
+                    .filter(itemProductCode::contains)
+                    .map(itemProductMap::get)
+                    .collect(Collectors.joining(","));
+        }
+
+        if (freeTemplateVos.size() == 1) {
+            if (unFreeSkuNames == null) {
+                return String.format("全部商品需满%s元包邮，当前未满足此条件。", freeTemplateVos.get(0).getFreePostagePrice() / 100);
+            } else {
+                return String.format("此订单中%s不参与包邮，其余商品需满%s元包邮，当前未满足此条件。", unFreeSkuNames, freeTemplateVos.get(0).getFreePostagePrice() / 100);
+            }
+        }
+
+        StringBuilder info = new StringBuilder();
+        if (unFreeSkuNames != null) {
+            info.append(String.format("此订单中%s不参与包邮，", unFreeSkuNames));
+        }
+        for (PostageTemplateVo templateVo : freeTemplateVos) {
+            if (templateVo.getType() == 1) {
+                String freeSkuNames = templateVo.getProductCodes().stream().filter(itemProductCode::contains).map(itemProductMap::get).collect(Collectors.joining(","));
+                info.append(String.format("%s需满足%s包邮，", freeSkuNames, templateVo.getFreePostagePrice() / 100));
+            } else {
+               //获取通用模板可以用来计算的商品名称
+                String commonSkuNames = templateVos.stream().filter(t -> t.getType() == 1)
+                        .flatMap(t -> t.getProductCodes().stream())
+                        .filter(code -> !itemProductCode.contains(code))
+                        .map(itemProductMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(commonSkuNames)) {
+                    info.append(String.format("%s需满足%s包邮，", commonSkuNames, templateVo.getFreePostagePrice() / 100));
+                }
+            }
+        }
+        info.append("当前未满足此条件。");
+        return info.toString();
+    }
 }

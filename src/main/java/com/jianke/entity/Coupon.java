@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,7 +53,7 @@ public class Coupon implements Serializable {
 		this.couponValue = Long.valueOf(param[0]);
 		this.type = Integer.valueOf(param[1]);
 		if (type == 2) {
-			this.productCodes = Stream.of(param[2].split(",")).map(s -> Long.valueOf(s)).collect(Collectors.toList());
+			this.productCodes = Stream.of(param[2].split(",")).map(Long::valueOf).collect(Collectors.toList());
 		}
 	}
 
