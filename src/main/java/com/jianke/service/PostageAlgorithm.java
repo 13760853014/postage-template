@@ -394,6 +394,7 @@ public class PostageAlgorithm {
         String unFreeSkuNames = null;
         if (!CollectionUtils.isEmpty(unfreeTemplateVos)) {
             unFreeSkuNames = unfreeTemplateVos.stream()
+                    .filter(t -> CollectionUtils.isNotEmpty(t.getProductCodes()))
                     .flatMap(t -> t.getProductCodes().stream())
                     .filter(itemProductCode::contains)
                     .map(itemProductMap::get)
