@@ -68,7 +68,7 @@ public class PostageAlgorithm {
                     log.info("此订单满足{}元包邮，已到达通用包邮门槛，整单包邮", commonTemplateVo.getFreePostagePrice() / 100);
                     postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", commonTemplateVo.getFreePostagePrice() / 100));
                     return true;
-                }else{
+                } else {
                     log.info("通用模板-此订单不满足{}元包邮", commonTemplateVo.getFreePostagePrice() / 100);
                 }
             }
@@ -82,7 +82,6 @@ public class PostageAlgorithm {
                 .filter(t -> t.getProductCodes().stream().anyMatch(code -> itemProductCode.contains(code.longValue())))
                 .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
                 .collect(Collectors.toList());
-        Map<String, List<Integer>> templateSkuMap = sortTemplates.stream().collect(Collectors.toMap(PostageTemplateVo::getId, PostageTemplateVo::getProductCodes, (p1, p2) -> p2));
         Set<Long> allTemplateSkus = sortTemplates.stream().flatMap(t -> t.getProductCodes().stream()).map(Integer::longValue).collect(toSet());
         //2、遍历所有特殊模板，一个个判断是否可以免邮
         Set<Integer> hasCalTemplateSkus = new HashSet<>();
@@ -290,11 +289,11 @@ public class PostageAlgorithm {
 
         int size = commonTemplateVos.size();
         if (size == 0) {
-            return Arrays.asList(new DeliveryTypeVo("7","顺丰", true, 0L));
+            return Arrays.asList(new DeliveryTypeVo("7", "顺丰", true, 0L));
         }
         List<DeliveryTypeVo> freeDeliveryTypeVos = commonTemplateVos.stream().flatMap(t -> t.getPostageTypes().stream()).filter(pt -> payType.equals(pt.getPayType())).flatMap(pt -> pt.getFreeDeliveryTypeVos().stream()).collect(Collectors.toList());
         if (size == 1) {
-            return CollectionUtils.isNotEmpty(freeDeliveryTypeVos) ? freeDeliveryTypeVos : Arrays.asList(new DeliveryTypeVo("7","顺丰", true, 0L));
+            return CollectionUtils.isNotEmpty(freeDeliveryTypeVos) ? freeDeliveryTypeVos : Arrays.asList(new DeliveryTypeVo("7", "顺丰", true, 0L));
         }
         //选出交集数量最多的2个
         log.debug("平台{}，支付类型{}，所有模板包邮的快递方式{}", p, payType, JSON.toJSONString(freeDeliveryTypeVos));
@@ -313,7 +312,7 @@ public class PostageAlgorithm {
 
         //如果一个交集都没有，则返回顺丰快递（因为已经包邮了，顺丰快递兜底）
         if (deliveryTypeVos.size() == 0) {
-            deliveryTypeVos.add(new DeliveryTypeVo("7","顺丰", true, 0L));
+            deliveryTypeVos.add(new DeliveryTypeVo("7", "顺丰", true, 0L));
         }
         return deliveryTypeVos;
     }
@@ -377,57 +376,67 @@ public class PostageAlgorithm {
 
 
     public static String postageDesc(List<PostageTemplateVo> templateVos, Map<Integer, String> itemProductMap, List<Integer> itemProductCode, String p, Integer payType) {
-        //根据订单产品，匹配所有的允许包邮模板（通用模板和所有允许包邮的特殊模板）
+        //根据订单产品，匹配所有的允许包邮的特殊模板
         List<PostageTemplateVo> freeTemplateVos = templateVos.stream()
                 .filter(t -> t.getPlatforms().contains(p))
-                .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
-                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
+                .filter(t -> (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
+                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 1))
                 .collect(Collectors.toList());
-        //根据订单产品，匹配所有的不允许包邮模板配置
+        //根据订单产品，匹配所有的不允许包邮的特殊模板
         List<PostageTemplateVo> unfreeTemplateVos = templateVos.stream()
                 .filter(t -> t.getPlatforms().contains(p))
-                .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
+                .filter(t -> (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 0))
                 .collect(Collectors.toList());
 
-        //不包邮的商品名称
-        String unFreeSkuNames = null;
-        if (!CollectionUtils.isEmpty(unfreeTemplateVos)) {
-            unFreeSkuNames = unfreeTemplateVos.stream()
-                    .filter(t -> CollectionUtils.isNotEmpty(t.getProductCodes()))
+        PostageTemplateVo commonTemplate = freeTemplateVos.stream().filter(t -> t.getPlatforms().contains(p) && t.getType() == 0).findFirst().orElse(null);
+        boolean commonTemplateIsAllowFree = commonTemplate != null && commonTemplate.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 1);
+
+        //所有不包邮的商品名称
+        String allUnFreeSkuNames = null;
+        if (!commonTemplateIsAllowFree) {
+            allUnFreeSkuNames = itemProductCode.stream()
+                    .filter(sku -> !freeTemplateVos.stream().flatMap(t -> t.getProductCodes().stream()).collect(Collectors.toList()).contains(sku))
+                    .map(itemProductMap::get)
+                    .collect(Collectors.joining(","));
+        } else if (!CollectionUtils.isEmpty(unfreeTemplateVos)) {
+            allUnFreeSkuNames = unfreeTemplateVos.stream()
                     .flatMap(t -> t.getProductCodes().stream())
                     .filter(itemProductCode::contains)
                     .map(itemProductMap::get)
                     .collect(Collectors.joining(","));
         }
 
-        if (freeTemplateVos.size() == 1) {
-            if (unFreeSkuNames == null) {
+        //只有一个模板允许包邮的情况（特殊和通用总共一个）
+        if (freeTemplateVos.size() == 1 && !commonTemplateIsAllowFree) {
+            if (StringUtils.isBlank(allUnFreeSkuNames)) {
                 return String.format("全部商品需满%s元包邮，当前未满足此条件。", freeTemplateVos.get(0).getFreePostagePrice() / 100);
             } else {
-                return String.format("此订单中%s不参与包邮，其余商品需满%s元包邮，当前未满足此条件。", unFreeSkuNames, freeTemplateVos.get(0).getFreePostagePrice() / 100);
+                return String.format("此订单中%s不参与包邮，其余商品需满%s元包邮，当前未满足此条件。", allUnFreeSkuNames, freeTemplateVos.get(0).getFreePostagePrice() / 100);
             }
         }
 
+        //有多个模板允许包邮/或者全部模板不允许包邮
         StringBuilder info = new StringBuilder();
-        if (unFreeSkuNames != null) {
-            info.append(String.format("此订单中%s不参与包邮，", unFreeSkuNames));
+        if (StringUtils.isBlank(allUnFreeSkuNames)) {
+            info.append(String.format("此订单中%s不参与包邮，", allUnFreeSkuNames));
         }
         for (PostageTemplateVo templateVo : freeTemplateVos) {
-            if (templateVo.getType() == 1) {
-                String freeSkuNames = templateVo.getProductCodes().stream().filter(itemProductCode::contains).map(itemProductMap::get).collect(Collectors.joining(","));
-                info.append(String.format("%s需满足%s包邮，", freeSkuNames, templateVo.getFreePostagePrice() / 100));
-            } else {
-               //获取通用模板可以用来计算的商品名称
-                String commonSkuNames = itemProductCode.stream().filter(sku -> !templateVos.stream()
-                        .filter(t -> t.getType() == 1)
-                        .flatMap(t -> t.getProductCodes().stream()).collect(Collectors.toList()).contains(sku))
-                        .map(itemProductMap::get)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.joining(","));
-                if (StringUtils.isNotBlank(commonSkuNames)) {
-                    info.append(String.format("%s需满足%s包邮，", commonSkuNames, templateVo.getFreePostagePrice() / 100));
-                }
+            String freeSkuNames = templateVo.getProductCodes().stream().filter(itemProductCode::contains).map(itemProductMap::get).collect(Collectors.joining(","));
+            info.append(String.format("%s需满足%s包邮，", freeSkuNames, templateVo.getFreePostagePrice() / 100));
+        }
+
+        //如果通用模板可以包邮
+        if (commonTemplateIsAllowFree) {
+            //获取通用模板可以用来计算的商品名称
+            String commonSkuNames = itemProductCode.stream().filter(sku -> !templateVos.stream()
+                    .filter(t -> t.getType() == 1)
+                    .flatMap(t -> t.getProductCodes().stream()).collect(Collectors.toList()).contains(sku))
+                    .map(itemProductMap::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(commonSkuNames)) {
+                info.append(String.format("%s需满足%s包邮，", commonSkuNames, commonTemplate.getFreePostagePrice() / 100));
             }
         }
         info.append("当前未满足此条件。");
