@@ -403,8 +403,8 @@ public class PostageAlgorithm {
                     .findFirst().orElse(null);
         }
         if (productCode == null) {
-            return String.format("【返回的快递方式提示语】  根据您选择的支付方式（在线支付）和快递方式（%s）, 收取%s元运费", deliveryTypeVo.getLogisticsName(), deliveryTypeVo.getDeliveryPrice() / 100);
+            return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 收取%s元运费", deliveryTypeVo.getLogisticsName(), deliveryTypeVo.getDeliveryPrice() / 100);
         }
-        return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%元收取。", deliveryTypeVo.getLogisticsName(), itemProductMap.get(productCode), deliveryTypeVo.getDeliveryPrice() / 100);
+        return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%s元收取。", deliveryTypeVo.getLogisticsName(), itemProductMap.get(productCode), deliveryTypeVo.getDeliveryPrice() / 100);
     }
 }

@@ -55,7 +55,7 @@ public class CalPostageService {
         templateVo.setType(1).setTemplateName("18特殊模板60包邮");
         templateVo.setProductCodes(Arrays.asList(18));
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|11-圆通-0", "7-顺丰-8|5-EMS-15"));
+        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|11-圆通-0", "7-顺丰-18|5-EMS-20"));
 //        templateVo.addType(new PostageTypeVo("0", "6-申通-8|5-EMS-15"));
         log.info(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
@@ -102,8 +102,8 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("85-商品名称11-3-2000"));
 //        list.add(new ShopCartItem("17-商品名称12-10-1000"));
         list.add(new ShopCartItem("18-商品名称22-1-2000"));
-//        list.add(new ShopCartItem("23-商品名称23-3-3000"));
-        list.add(new ShopCartItem("31-商品名称31-1-3000"));
+//        list.add(new ShopCartItem("23-商品名称23-1-1000"));
+//        list.add(new ShopCartItem("31-商品名称31-1-3000"));
         //list.addAll(new ShopCartItem().combine("31-商品31-3-3000","31-商品31-3-3000", 100001));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
