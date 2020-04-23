@@ -84,7 +84,7 @@ public class CalPostageService {
             if (deliveryTypeVos.size() == 1) {
                 log.info("【不包邮不同快递运费】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
             } else {
-                String deliveryTypeDesc = PostageAlgorithm.deliveryTypeDesc(templateVos, itemProductMap, itemProductCode, platform, 99, deliveryTypeVos.get(0));
+                String deliveryTypeDesc = PostageAlgorithm.deliveryTypeDesc(templateVos, itemProductMap, itemProductCode, platform, 99, deliveryTypeVos.get(1));
                 log.info("【不包邮不同快递运费】 {}", deliveryTypeDesc);
             }
         }
@@ -100,8 +100,8 @@ public class CalPostageService {
         //编码-名称-数量-单个商品价格(分)
         List<ShopCartItem> list = new ArrayList<>();
 //        list.add(new ShopCartItem("85-商品名称11-3-2000"));
-//        list.add(new ShopCartItem("17-商品名称12-10-1000"));
-        list.add(new ShopCartItem("18-商品名称22-1-2000"));
+        list.add(new ShopCartItem("17-商品名称12-1-1000"));
+        list.add(new ShopCartItem("16-商品名称22-1-2000"));
 //        list.add(new ShopCartItem("23-商品名称23-1-1000"));
 //        list.add(new ShopCartItem("31-商品名称31-1-3000"));
         //list.addAll(new ShopCartItem().combine("31-商品31-3-3000","31-商品31-3-3000", 100001));

@@ -212,10 +212,14 @@ public class PostageAlgorithm {
         List<Integer> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode().intValue()).distinct().collect(Collectors.toList());
         System.out.println();
         if (!isFree) {
-            //根据平台，支付类型，获取通用模板和特殊模板不包邮的快递方式（特殊模板需要根据购买的商品）
+            //在特殊模板配置过的商品，这些商品不能参与通用模板免邮计算
+            List<Long> commonTemplateProduct = commonTemplateProduct(specialTemplateProduct(templateVos, p), shopCartBase);
+
+            //根据平台，支付类型，获取通用模板(购物车有非特殊配置的商品)和特殊模板不包邮的快递方式（特殊模板需要根据购买的商品）
             List<DeliveryTypeVo> unFreeDeliveryTypeVos = templateVos.stream()
                     .filter(t -> t.getPlatforms().contains(p))
-                    .filter(t -> (t.getType() == 0) || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
+                    .filter(t -> (t.getType() == 0 && CollectionUtils.isNotEmpty(commonTemplateProduct))
+                            || (t.getType() == 1 && t.getProductCodes() != null && itemProductCode.stream().anyMatch(t.getProductCodes()::contains)))
                     .flatMap(t -> t.getPostageTypes().stream())
                     .filter(pt -> payType.equals(pt.getPayType()))
                     .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
