@@ -74,7 +74,11 @@ public class PostageTypeVo {
             log.info("-----邮费模板配置错误-----");
         }
         String[] unFreeArr = unfree.split("\\|");
-        this.unFreeDeliveryTypeVos = new DeliveryTypeVo().build(unFreeArr[0], unFreeArr[1]);
+        if (unFreeArr.length == 2) {
+            this.unFreeDeliveryTypeVos = new DeliveryTypeVo().build(unFreeArr[0], unFreeArr[1]);
+        } else {
+            this.unFreeDeliveryTypeVos = Arrays.asList(new DeliveryTypeVo(unFreeArr[0]));
+        }
     }
 
 }
