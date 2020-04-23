@@ -395,11 +395,9 @@ public class PostageAlgorithm {
                 .findFirst().orElse(null);
         if (productCode == null) {
             //特殊模板找不到，在通用模板找一个
-            productCode = templateVos.stream()
+            productCode = itemProductCode.stream().filter(sku -> !templateVos.stream()
                     .filter(t -> t.getType() == 1)
-                    .filter(t -> t.getPlatforms().contains(p))
-                    .flatMap(t -> t.getProductCodes().stream())
-                    .filter(code -> !itemProductCode.contains(code))
+                    .flatMap(t -> t.getProductCodes().stream()).collect(Collectors.toList()).contains(sku))
                     .findFirst().orElse(null);
         }
         if (productCode == null) {
