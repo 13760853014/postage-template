@@ -393,7 +393,7 @@ public class PostageAlgorithm {
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getUnFreeDeliveryTypeVos().stream().anyMatch(dt -> dt.getId().equals(deliveryTypeVo.getId()))))
                 .flatMap(t -> t.getProductCodes().stream())
                 .findFirst().orElse(null);
-        if (productCode != null) {
+        if (productCode == null) {
             //特殊模板找不到，在通用模板找一个
             productCode = templateVos.stream()
                     .filter(t -> t.getType() == 1)

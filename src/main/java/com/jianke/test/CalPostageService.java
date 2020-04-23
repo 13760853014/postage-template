@@ -82,10 +82,10 @@ public class CalPostageService {
             String postageDesc = PostageAlgorithm.postageDesc(templateVos, itemProductMap, itemProductCode, platform, 99);
             log.info("【不包邮运费提示语】 {}", postageDesc);
             if (deliveryTypeVos.size() == 1) {
-                log.info("【不包邮运费提示语】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
+                log.info("【不包邮不同快递运费】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
             } else {
                 String deliveryTypeDesc = PostageAlgorithm.deliveryTypeDesc(templateVos, itemProductMap, itemProductCode, platform, 99, deliveryTypeVos.get(0));
-                log.info("【不包邮运费提示语】 {}", deliveryTypeDesc);
+                log.info("【不包邮不同快递运费】 {}", deliveryTypeDesc);
             }
         }
         //商品在详情页展示的邮费标签
