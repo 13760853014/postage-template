@@ -401,7 +401,7 @@ public class PostageAlgorithm {
 
         //有多个模板允许包邮/或者全部模板不允许包邮
         StringBuilder info = new StringBuilder();
-        if (StringUtils.isBlank(allUnFreeSkuNames)) {
+        if (StringUtils.isNotBlank(allUnFreeSkuNames)) {
             info.append(String.format("此订单中%s不参与包邮，", allUnFreeSkuNames));
         }
         for (PostageTemplateVo templateVo : freeTemplateVos) {
