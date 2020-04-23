@@ -30,9 +30,6 @@ public class PostageAlgorithm {
         for (Long productCode : itemProductCode) {
             if (freePostage.contains(productCode)) {
                 log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
-                PostageTemplateVo commonTemplate = templateVos.stream().filter(t -> t.getPlatforms().contains(p)).filter(t -> t.getType() == 0).findFirst().orElse(null);
-//                String freePrice = commonTemplate != null ? String.valueOf(commonTemplate.getFreePostagePrice() / 100) : "99";
-//                postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", freePrice));
                 postageTip.add(String.format("此订单包含包邮商品，整单包邮。"));
                 return true;
             }
@@ -66,7 +63,7 @@ public class PostageAlgorithm {
             if (!commonTemplateIsAllowFree) {
                 log.debug("通用模板【{}】， 不支持包邮", commonTemplateVo.getTemplateName());
             } else {
-                isFree = calCommonTemplateIsFree(commonTemplateVo, shopCartBase, p, payType, specialTemplateProduct, templateForCombineId.get(commonTemplateVo.getTemplateName()));
+                isFree = calCommonTemplateIsFree(commonTemplateVo, shopCartBase, specialTemplateProduct, templateForCombineId.get(commonTemplateVo.getTemplateName()));
                 if (isFree) {
                     log.info("此订单满足{}元包邮，已到达通用包邮门槛，整单包邮", commonTemplateVo.getFreePostagePrice() / 100);
                     postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", commonTemplateVo.getFreePostagePrice() / 100));
@@ -216,6 +213,9 @@ public class PostageAlgorithm {
 
     //计算搭配商品的总金额
     public static long calCombineTotalNum(ShopCartBase shopCartBase, List<Long> combineIds) {
+        if (CollectionUtils.isEmpty(combineIds)) {
+            return 0L;
+        }
         return shopCartBase.getMerchants().stream()
                 .flatMap(m -> m.getItems().stream())
                 .filter(item -> item != null && combineIds.contains(item.getCombineId()))
@@ -226,7 +226,7 @@ public class PostageAlgorithm {
     /**
      * 根据平台，支付类型， 计算通用模板是否免邮
      */
-    public static boolean calCommonTemplateIsFree(PostageTemplateVo commonTemplates, ShopCartBase shopCartBase, String p, Integer payType, List<Long> specialTemplateProduct, List<Long> combineIds) {
+    public static boolean calCommonTemplateIsFree(PostageTemplateVo commonTemplates, ShopCartBase shopCartBase, List<Long> specialTemplateProduct, List<Long> combineIds) {
         //1、获取购物车中，能够使用该模板计算运费的单品（排除所有的特殊模板商品）
         List<ShopCartItem> items = shopCartBase.getMerchants().stream()
                 .flatMap(cartItem -> cartItem.getItems().stream())
