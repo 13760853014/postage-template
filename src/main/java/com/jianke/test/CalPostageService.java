@@ -73,19 +73,19 @@ public class CalPostageService {
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
 
         if (isFree) {
-            log.info("【返回的运费计算提示语】 {}", postageTip.isEmpty() ? "" : postageTip.get(0));
+            log.info("【包邮运费提示语】 {}", postageTip.isEmpty() ? "" : postageTip.get(0));
         } else {
             Map<Integer, String> itemProductMap = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), item -> item.getProductName(), (i, j) -> i));
             List<Integer> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode().intValue()).distinct().collect(Collectors.toList());
 
             //不包邮的情况下，需要重新计算运费提示语
             String postageDesc = PostageAlgorithm.postageDesc(templateVos, itemProductMap, itemProductCode, platform, 99);
-            log.info("【返回的运费计算提示语】 {}", postageDesc);
+            log.info("【不包邮运费提示语】 {}", postageDesc);
             if (deliveryTypeVos.size() == 1) {
-                log.info("【返回的快递方式提示语】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
+                log.info("【不包邮运费提示语】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
             } else {
                 String deliveryTypeDesc = PostageAlgorithm.deliveryTypeDesc(templateVos, itemProductMap, itemProductCode, platform, 99, deliveryTypeVos.get(0));
-                log.info("【返回的快递方式提示语】 {}", deliveryTypeDesc);
+                log.info("【不包邮运费提示语】 {}", deliveryTypeDesc);
             }
         }
         //商品在详情页展示的邮费标签
@@ -99,11 +99,11 @@ public class CalPostageService {
         merchant.setMerchantCode(1).setMerchantName("健客自营");
         //编码-名称-数量-单个商品价格(分)
         List<ShopCartItem> list = new ArrayList<>();
-        list.add(new ShopCartItem("16-商品名称11-3-2000"));
-        //list.add(new ShopCartItem("17-商品名称12-1-1000"));
-        //list.add(new ShopCartItem("18-商品名称22-3-3000"));
+//        list.add(new ShopCartItem("85-商品名称11-3-2000"));
+//        list.add(new ShopCartItem("17-商品名称12-10-1000"));
+        list.add(new ShopCartItem("18-商品名称22-1-2000"));
 //        list.add(new ShopCartItem("23-商品名称23-3-3000"));
-//        list.add(new ShopCartItem("31-商品名称31-3-3000"));
+        list.add(new ShopCartItem("31-商品名称31-1-3000"));
         //list.addAll(new ShopCartItem().combine("31-商品31-3-3000","31-商品31-3-3000", 100001));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");

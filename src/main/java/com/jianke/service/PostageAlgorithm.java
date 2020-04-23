@@ -11,6 +11,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -29,8 +30,9 @@ public class PostageAlgorithm {
             if (freePostage.contains(productCode)) {
                 log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
                 PostageTemplateVo commonTemplate = templateVos.stream().filter(t -> t.getPlatforms().contains(p)).filter(t -> t.getType() == 0).findFirst().orElse(null);
-                String freePrice = commonTemplate != null ? String.valueOf(commonTemplate.getFreePostagePrice() / 100) : "99";
-                postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", freePrice));
+//                String freePrice = commonTemplate != null ? String.valueOf(commonTemplate.getFreePostagePrice() / 100) : "99";
+//                postageTip.add(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", freePrice));
+                postageTip.add(String.format("此订单包含包邮商品，整单包邮。"));
                 return true;
             }
         }
@@ -368,9 +370,9 @@ public class PostageAlgorithm {
                 info.append(String.format("%s需满足%s包邮，", freeSkuNames, templateVo.getFreePostagePrice() / 100));
             } else {
                //获取通用模板可以用来计算的商品名称
-                String commonSkuNames = templateVos.stream().filter(t -> t.getType() == 1)
-                        .flatMap(t -> t.getProductCodes().stream())
-                        .filter(code -> !itemProductCode.contains(code))
+                String commonSkuNames = itemProductCode.stream().filter(sku -> !templateVos.stream()
+                        .filter(t -> t.getType() == 1)
+                        .flatMap(t -> t.getProductCodes().stream()).collect(Collectors.toList()).contains(sku))
                         .map(itemProductMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.joining(","));
