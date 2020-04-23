@@ -11,7 +11,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -30,7 +29,7 @@ public class PostageAlgorithm {
         for (Long productCode : itemProductCode) {
             if (freePostage.contains(productCode)) {
                 log.info("客官，恭喜你买了一个免邮商品，sku={}", productCode);
-                postageTip.add(String.format("此订单包含包邮商品，整单包邮。"));
+                postageTip.add("此订单包含包邮商品，整单包邮。");
                 return true;
             }
         }
@@ -77,8 +76,7 @@ public class PostageAlgorithm {
         //2、-----判断特殊模板是否满足包邮-------
         //特殊模板按门槛由低到高排序（只对购物车商品对应的模板排序）
         List<PostageTemplateVo> sortTemplates = templateVos.stream()
-                .filter(t -> t.getPlatforms().contains(p))
-                .filter(t -> t.getType() == 1)
+                .filter(t -> t.getPlatforms().contains(p) && t.getType() == 1)
                 .filter(t -> t.getProductCodes().stream().anyMatch(code -> itemProductCode.contains(code.longValue())))
                 .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
                 .collect(Collectors.toList());
@@ -101,25 +99,15 @@ public class PostageAlgorithm {
             List<Long> higherTepmlateSkus = allTemplateSkus.stream().filter(t -> !hasCalTemplateSkus.contains(t.intValue())).collect(Collectors.toList());
 
             //获取购物车中，能够使用该模板计算运费的商品，
-            List<ShopCartItem> items;
-            if (!commonTemplateIsAllowFree) {
-                //通用模板不支持包邮, 只有在该模板配置了的商品，才能去计算包邮门槛
-                items = shopCartBase.getMerchants().stream()
+            //1、通用模板支持包邮，需要减去不包邮商品和高级特殊模板配置了的商品
+            //2、通用模板不支持包邮，需要减去不包邮商品和高级特殊模板配置了的商品，以及通用模板计算的商品
+            boolean isAllowFree = commonTemplateIsAllowFree;
+            List<ShopCartItem> items = shopCartBase.getMerchants().stream()
                         .flatMap(cartItem -> cartItem.getItems().stream())
                         .filter(item -> !unFreeProduct.contains(item.getProductCode()))
                         .filter(item -> !higherTepmlateSkus.contains(item.getProductCode()))
-                        .filter(item -> !commonTemplateProduct.contains(item.getProductCode()))
+                        .filter(item -> !isAllowFree && !commonTemplateProduct.contains(item.getProductCode()))
                         .collect(Collectors.toList());
-            } else {
-                //通用模板支持包邮，需要减去不包邮商品和高级特殊模板配置了的商品
-                items = shopCartBase.getMerchants().stream()
-                        .flatMap(cartItem -> cartItem.getItems().stream())
-                        .filter(item -> !unFreeProduct.contains(item.getProductCode()))
-                        .filter(item -> !higherTepmlateSkus.contains(item.getProductCode()))
-                        .collect(Collectors.toList());
-            }
-
-            List<Long> combineIds = null;
 
             List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
             long itemAmount = calItemTotalNum(items);
@@ -199,15 +187,10 @@ public class PostageAlgorithm {
 
     //计算单品的总金额
     public static long calItemTotalNum(List<ShopCartItem> items) {
-        long sum = 0;
-        for (ShopCartItem item : items) {
-            if (item.getCombineId() == null) {
-                sum = sum + item.getActualPrice() * item.getProductNum();
-            } else {
-                sum = sum + item.getActualPrice() * item.getCombineNum() * item.getProductNum();
-            }
-        }
-        return sum;
+        return items.stream()
+                .filter(item -> item.getCombineId() == null)
+                .mapToLong(item -> item.getActualPrice() * item.getProductNum())
+                .sum();
     }
 
     //计算搭配商品的总金额
