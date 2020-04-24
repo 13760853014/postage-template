@@ -1,0 +1,162 @@
+package com.jianke.service;
+
+import com.alibaba.fastjson.JSON;
+import com.jianke.entity.cart.ShopCartBase;
+import com.jianke.entity.cart.ShopCartItem;
+import com.jianke.vo.PostageTemplateVo;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toSet;
+
+/**
+ * 运费计算管家
+ */
+@Data
+@Slf4j
+public class CalculateDirector implements Serializable {
+    /**
+     * 购物车商品集合
+     */
+    private List<Long> shopCartProductCodes;
+
+    private List<Integer> shopCartSkuCodes;
+
+    /**
+     * 在特殊模板配置过的商品，这些商品不能参与通用模板免邮计算
+     */
+    private List<Long> specialTemplateCalculateProduct = Collections.emptyList();
+
+    /**
+     * 不在特殊模板的商品，用通用模板计算
+     */
+    private List<Long> commonTemplateCalculateProduct;
+
+    /**
+     * 不允许包邮商品
+     */
+    private List<Long> unFreeProduct;
+
+    /**
+     * 搭销用来计算的模板： 模板id, 多个搭配id
+     */
+    private Map<String, List<Long>> templateForCombineId;
+
+    /**
+     * 通用模板
+     */
+    private PostageTemplateVo commonTemplate;
+
+    /**
+     * 特殊模板
+     */
+    private List<PostageTemplateVo> specialTemplate;
+
+    private boolean isCommonTemplateAllowFree;
+
+    private boolean isContainCombine;
+
+    private  Map<Integer, String> itemProductMap;
+
+    private  Map<Long, String> combineProductMap;
+
+    private String platform;
+
+    private String postageTip;
+
+    private Integer payType;
+
+    private List<ShopCartItem> shopCartItems;
+
+    private List<PostageTemplateVo> allTemplateVos;
+
+    public CalculateDirector(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String platform, Integer payType) {
+        this.platform = platform;
+        this.payType = payType;
+        this.allTemplateVos = templateVos.stream().filter(t -> t.getPlatforms().contains(platform)).collect(Collectors.toList());
+        this.shopCartItems = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(Objects::nonNull).collect(Collectors.toList());
+        this.shopCartProductCodes = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(item -> item.getCombineId() == null).map(ShopCartItem::getProductCode).distinct().collect(Collectors.toList());
+        this.shopCartSkuCodes = shopCartProductCodes.stream().map(Long::intValue).distinct().collect(Collectors.toList());
+        this.commonTemplate = allTemplateVos.stream().filter(t -> t.getType() == 0).findFirst().orElse(new PostageTemplateVo());
+        this.specialTemplate = allTemplateVos.stream().filter(t -> t.getType() == 1).collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(specialTemplate)) {
+            this.specialTemplateCalculateProduct = specialTemplate.stream().flatMap(t -> t.getProductCodes().stream()).map(Integer::longValue).filter(shopCartProductCodes::contains).collect(Collectors.toList());
+            log.info("在特殊模板配置的商品：{}", specialTemplateCalculateProduct);
+            this.unFreeProduct = unFreeProduct(specialTemplate, payType, platform);
+            log.info("特殊模板不能参与免邮计算的商品：{}", unFreeProduct);
+        }
+
+        this.commonTemplateCalculateProduct = shopCartProductCodes.stream().filter(sku -> !specialTemplateCalculateProduct.contains(sku)).collect(Collectors.toList());
+        log.info("可以在通用模板计算的商品：{}", commonTemplateCalculateProduct);
+
+        this.isCommonTemplateAllowFree = commonTemplate.getPostageTypes().stream().filter(pt -> pt.getPayType().equals(payType)).anyMatch(pt -> pt.getIsAllowFree() == 1);
+        log.info("通用模板是否允许包邮：{}", isCommonTemplateAllowFree);
+
+        this.isContainCombine = isContainCombine(shopCartBase);
+        log.info("购物车是否包含搭销商品：{}", isContainCombine);
+        if (isContainCombine) {
+            this.templateForCombineId = templateCalculateCombineId(templateVos, shopCartBase, platform);
+            combineProductMap = shopCartItems.stream().filter(item -> item.getCombineId() != null).collect(Collectors.toMap(ShopCartItem::getCombineId, ShopCartItem::getCombineName, (i, j) -> j));
+            log.info("用来计算搭销的模板Id, 对应的搭销ids：{}", JSON.toJSONString(templateForCombineId));
+        }
+        this.itemProductMap = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), ShopCartItem::getProductName, (i, j) -> i));
+    }
+
+    private boolean isContainCombine(ShopCartBase shopCartBase) {
+        return shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).anyMatch(item -> item.getCombineId() != null);
+    }
+
+    private List<Long> specialTemplateProduct(List<PostageTemplateVo> templateVos, String p, List<Long> shopCartProductCodes) {
+        return templateVos.stream()
+                .filter(t -> t.getType() == 1)
+                .filter(t -> t.getPlatforms().contains(p))
+                .flatMap(t -> t.getProductCodes().stream())
+                .map(Integer::longValue)
+                .filter(shopCartProductCodes::contains)
+                .collect(Collectors.toList());
+    }
+
+    //特殊模板，不能参与免邮计算的商品
+    private List<Long> unFreeProduct(List<PostageTemplateVo> templateVos, Integer payType, String p) {
+        return templateVos.stream()
+                .filter(t -> t.getPostageTypes().stream()
+                        .filter(pt -> payType.equals(pt.getPayType()))
+                        .anyMatch(pt -> pt.getIsAllowFree() == 0))
+                .flatMap(t -> t.getProductCodes().stream())
+                .map(Integer::longValue)
+                .collect(Collectors.toList());
+    }
+
+    private Map<String, List<Long>> templateCalculateCombineId(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p) {
+        //先找出结算商品中所有的搭配(combineMap: 搭配Id, 搭配Id对应的商品编码)
+        Map<Long, Set<Integer>> combineMap = shopCartBase.getMerchants().stream()
+                .flatMap(m -> m.getItems().stream())
+                .filter(cartItem -> cartItem.getCombineId() != null)
+                .collect(Collectors.groupingBy(ShopCartItem::getCombineId, Collectors.collectingAndThen(
+                        toSet(), item -> item.stream().map(i -> i.getProductCode().intValue()).collect(toSet()))));
+
+        String commonTemplateName = commonTemplate != null ? commonTemplate.getTemplateName() : "";
+
+        //模板id, 多个搭配id
+        Map<String, List<Long>> templateForCombineMap = new HashMap<>();
+        //一个个搭配来处理，找到包邮的特殊模板中，门槛最高的那个， 找不到就用通用模板
+        for (Long combineId : combineMap.keySet()) {
+            //先在特殊模板(允许包邮的)包含搭配商品的模板中，找到门槛最高的
+            PostageTemplateVo specialTemplateMax = templateVos.stream().filter(t -> t.getType() == 1 && t.getPlatforms().contains(p))
+                    .filter(t -> t.getProductCodes() != null && combineMap.get(combineId).stream().anyMatch(t.getProductCodes()::contains))
+                    .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
+                    .max(Comparator.comparing(PostageTemplateVo::getFreePostagePrice)).orElse(null);
+
+            String calculateTemplateName = specialTemplateMax != null ? specialTemplateMax.getTemplateName() : commonTemplateName;
+            templateForCombineMap.computeIfAbsent(calculateTemplateName, k -> new ArrayList<>());
+            templateForCombineMap.get(calculateTemplateName).add(combineId);
+        }
+        return templateForCombineMap;
+    }
+}

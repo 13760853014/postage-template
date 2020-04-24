@@ -5,6 +5,7 @@ import com.jianke.entity.cart.Merchant;
 import com.jianke.entity.cart.ShopCartBase;
 import com.jianke.entity.cart.ShopCartItem;
 import com.jianke.service.PostageAlgorithm;
+import com.jianke.service.PostageCalculateAlgorithm;
 import com.jianke.vo.DeliveryTypeVo;
 import com.jianke.vo.PostageTemplateVo;
 import com.jianke.vo.PostageTypeVo;
@@ -80,29 +81,7 @@ public class CalPostageService {
         ShopCartBase shopCartBase = buildShopCartBase();
         String platform = "app";
         List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
-        //判断商品是否免邮，已经获取对应的运费类型
-        boolean isFree = PostageAlgorithm.calPostageIsFree(templateVos, shopCartBase, platform, 99, freePostage, postageTip);
-        List<DeliveryTypeVo> deliveryTypeVos = PostageAlgorithm.getPostageType(templateVos, shopCartBase, platform, 99, isFree);
-        log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
-
-        if (isFree) {
-            log.info("【包邮运费提示语】 {}", postageTip.isEmpty() ? "" : postageTip.get(0));
-        } else {
-            Map<Integer, String> itemProductMap = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), item -> item.getProductName(), (i, j) -> i));
-            List<Integer> itemProductCode = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).map(item -> item.getProductCode().intValue()).distinct().collect(Collectors.toList());
-
-            //不包邮的情况下，需要重新计算运费提示语
-            String postageDesc = PostageAlgorithm.postageDesc(templateVos, itemProductMap, itemProductCode, platform, 99);
-            log.info("【不包邮运费提示语】 {}", postageDesc);
-            if (deliveryTypeVos.size() == 1) {
-                log.info("【不包邮不同快递运费】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
-            } else {
-                String deliveryTypeDesc = PostageAlgorithm.deliveryTypeDesc(templateVos, itemProductMap, itemProductCode, platform, 99, deliveryTypeVos.get(0));
-                log.info("【不包邮不同快递运费】 {}", deliveryTypeDesc);
-            }
-        }
-        //商品在详情页展示的邮费标签
-        PostageAlgorithm.getPostageLabel(templateVos, 80, platform);
+        PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage);
     }
 
 
@@ -118,7 +97,7 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("18-商品名称18-6-1000"));
 //        list.add(new ShopCartItem("31-商品名称31-1-3000"));
 //        list.add(new ShopCartItem("1-商品名称1-1-3000"));
-        list.addAll(new ShopCartItem().combine("31-商品31-1-1-3000","16-商品31-1-1-3000", 100001));
+        list.addAll(new ShopCartItem().combine("31-商品31-1-1-3000","16-商品31-1-1-3000", 100001, "裴桾惠+李乔羚"));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
         return shop;

@@ -142,7 +142,7 @@ public class ShopCartItem implements Serializable{
         this.actualPrice = Long.valueOf(param[3]);
     }
 
-    public List<ShopCartItem> combine(String i, String j, Integer id) {
+    public List<ShopCartItem> combine(String i, String j, Integer id, String combineName) {
         String[] param = i.split("-");
         String[] param1 = j.split("-");
         ShopCartItem item = new ShopCartItem()
@@ -151,14 +151,16 @@ public class ShopCartItem implements Serializable{
                 .setProductName(param[1])
                 .setProductNum(Integer.parseInt(param[2]))
                 .setCombineNum(Integer.parseInt(param[3]))
-                .setActualPrice(Long.valueOf(param[4]));
+                .setActualPrice(Long.valueOf(param[4]))
+                .setCombineName(combineName);
         ShopCartItem item1 = new ShopCartItem()
                 .setCombineId(id.longValue())
                 .setProductCode(Long.valueOf(param1[0]))
                 .setProductName(param1[1])
                 .setProductNum(Integer.parseInt(param1[2]))
                 .setCombineNum(Integer.parseInt(param1[3]))
-                .setActualPrice(Long.valueOf(param1[4]));
+                .setActualPrice(Long.valueOf(param1[4]))
+                .setCombineName(combineName);
         return Arrays.asList(item, item1);
     }
 }
