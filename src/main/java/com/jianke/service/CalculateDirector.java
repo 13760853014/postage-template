@@ -53,6 +53,11 @@ public class CalculateDirector implements Serializable {
     private Map<String, List<Long>> templateForCombineId = new HashMap<>(2);
 
     /**
+     * 搭销用来获取快递方式的模板： 搭配id，对应一个搭销模板
+     */
+    private Map<Long, String> combineIdForDeliveryTypeTemplate = new HashMap<>(2);
+
+    /**
      * 搭销id对应可以计算的模板id： 搭销id, 多个模板id
      */
     private Map<Long, List<String>> combineIdForCalculateTemplate;
@@ -163,6 +168,7 @@ public class CalculateDirector implements Serializable {
             if (combineMap.get(combineId).stream().noneMatch(sku -> specialTemplateCalculateProduct.contains(sku))) {
                 if (commonTemplate != null && isCommonTemplateAllowFree) {
                     templateIds.add(commonTemplate.getId());
+                    combineIdForDeliveryTypeTemplate.put(combineId, commonTemplate.getId());
                 }
                 if (CollectionUtils.isNotEmpty(specialTemplate)) {
                     List<String> ids = specialTemplate.stream().filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
@@ -178,6 +184,7 @@ public class CalculateDirector implements Serializable {
                     templateIds = specialTemplate.stream().filter(t -> t.getFreePostagePrice() >= specialTemplateMax.getFreePostagePrice())
                             .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                             .map(PostageTemplateVo::getId).collect(Collectors.toList());
+                    combineIdForDeliveryTypeTemplate.put(combineId, specialTemplateMax.getId());
                 }
             }
             combineIdForTemplateIdMap.put(combineId, templateIds);
