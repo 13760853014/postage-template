@@ -21,9 +21,14 @@ import static java.util.stream.Collectors.toSet;
 @Slf4j
 public class CalculateDirector implements Serializable {
     /**
-     * 购物车商品集合
+     * 购物车商品集合（不包括搭销）
      */
     private List<Long> shopCartProductCodes;
+
+    /**
+     * 购物车搭销商品集合
+     */
+    private List<Long> shopCartCombineProductCodes;
 
     private List<Integer> shopCartSkuCodes;
 
@@ -86,13 +91,16 @@ public class CalculateDirector implements Serializable {
         this.allTemplateVos = templateVos.stream().filter(t -> t.getPlatforms().contains(platform)).collect(Collectors.toList());
         this.shopCartItems = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(Objects::nonNull).collect(Collectors.toList());
         this.shopCartProductCodes = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(item -> item.getCombineId() == null).map(ShopCartItem::getProductCode).distinct().collect(Collectors.toList());
+        this.shopCartCombineProductCodes = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(item -> item.getCombineId() != null).map(ShopCartItem::getProductCode).distinct().collect(Collectors.toList());
         this.shopCartSkuCodes = shopCartProductCodes.stream().map(Long::intValue).distinct().collect(Collectors.toList());
         this.commonTemplate = allTemplateVos.stream().filter(t -> t.getType() == 0).findFirst().orElse(new PostageTemplateVo());
         this.specialTemplate = allTemplateVos.stream().filter(t -> t.getType() == 1).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(specialTemplate)) {
-            this.specialTemplateCalculateProduct = specialTemplate.stream().flatMap(t -> t.getProductCodes().stream()).map(Integer::longValue).filter(shopCartProductCodes::contains).collect(Collectors.toList());
-            log.info("在特殊模板配置的商品：{}", specialTemplateCalculateProduct);
+            List<Long> shopCartAllProductCodes = new ArrayList<>(shopCartCombineProductCodes);
+            shopCartAllProductCodes.addAll(shopCartProductCodes);
+            this.specialTemplateCalculateProduct = specialTemplate.stream().flatMap(t -> t.getProductCodes().stream()).map(Integer::longValue).filter(shopCartAllProductCodes::contains).collect(Collectors.toList());
+            log.info("在特殊模板配置的商品(同时购物车有的)：{}", specialTemplateCalculateProduct);
             this.unFreeProduct = unFreeProduct(specialTemplate, payType, platform);
             log.info("特殊模板不能参与免邮计算的商品：{}", unFreeProduct);
         }
