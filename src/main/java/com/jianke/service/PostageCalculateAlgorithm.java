@@ -85,7 +85,8 @@ public class PostageCalculateAlgorithm {
         //2、-----判断特殊模板是否满足包邮-------
         //特殊模板按门槛由低到高排序（只对购物车商品对应的模板排序）
         List<PostageTemplateVo> sortTemplates = director.getSpecialTemplate().stream()
-                .filter(t -> t.getProductCodes().stream().anyMatch(code -> director.getShopCartProductCodes().contains(code.longValue())))
+                .filter(t -> t.getProductCodes().stream().anyMatch(code -> director.getShopCartProductCodes().contains(code.longValue()))
+                || director.getTemplateForCombineId().containsKey(t.getId()))
                 .sorted(Comparator.comparing(PostageTemplateVo::getFreePostagePrice))
                 .collect(Collectors.toList());
         Set<Long> allTemplateSkus = sortTemplates.stream().flatMap(t -> t.getProductCodes().stream()).map(Integer::longValue).collect(toSet());
