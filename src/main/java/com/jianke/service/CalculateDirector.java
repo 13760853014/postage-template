@@ -185,6 +185,9 @@ public class CalculateDirector implements Serializable {
                             .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                             .map(PostageTemplateVo::getId).collect(Collectors.toList());
                     combineIdForDeliveryTypeTemplate.put(combineId, specialTemplateMax.getId());
+                } else {
+                    templateIds.add(commonTemplate.getId());
+                    combineIdForDeliveryTypeTemplate.put(combineId, commonTemplate.getId());
                 }
             }
             combineIdForTemplateIdMap.put(combineId, templateIds);
