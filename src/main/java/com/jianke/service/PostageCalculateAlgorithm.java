@@ -29,7 +29,7 @@ public class PostageCalculateAlgorithm {
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
 
         if (isFree) {
-            log.info("【包邮运费提示语】 {}", director.getPostageTip());
+            log.info("【包邮运费提示语】{}", director.getPostageTip());
         } else {
             //不包邮的情况下，需要重新计算运费提示语
             String postageDesc = postageDesc(director);
