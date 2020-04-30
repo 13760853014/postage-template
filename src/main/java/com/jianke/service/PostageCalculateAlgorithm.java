@@ -202,6 +202,9 @@ public class PostageCalculateAlgorithm {
                 unFreeDeliveryTypeVos.addAll(unFreeDeliveryTypes);
             }
             log.debug("平台{}，所有模板不包邮的快递方式{}", director.getPlatform(), JSON.toJSONString(unFreeDeliveryTypeVos));
+            if (CollectionUtils.isEmpty(unFreeDeliveryTypeVos)) {
+                return Arrays.asList(new DeliveryTypeVo("7", "顺丰", false, 10L));
+            }
             //选出邮费最高的2个
             List<DeliveryTypeVo> deliveryTypeVos = new ArrayList<>();
             unFreeDeliveryTypeVos.stream().sorted(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice).reversed())
