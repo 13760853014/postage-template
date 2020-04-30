@@ -312,7 +312,7 @@ public class PostageCalculateAlgorithm {
         //根据订单产品，匹配所有的允许包邮的特殊模板
         List<PostageTemplateVo> freeTemplateVos = director.getSpecialTemplate().stream()
                 .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getTemplateForCombineId().keySet().contains(t.getId()))
+                        || director.getTemplateForCombineId().containsKey(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 1))
                 .collect(Collectors.toList());
 
@@ -373,10 +373,8 @@ public class PostageCalculateAlgorithm {
                     .map(director.getItemProductMap()::get)
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
-                List<Long> temp = director.getTemplateForCombineId().get(templateVo.getId());
                 allUnFreeCombineNames = director.getTemplateForCombineId().get(templateVo.getId())
-                        .stream()
-                        .map(id -> director.getCombineProductNameMap().get(id))
+                        .stream().map(id -> director.getCombineProductNameMap().get(id))
                         .collect(Collectors.joining(","));
                 if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
                     freeSkuNames = freeSkuNames + "," + allUnFreeCombineNames;
