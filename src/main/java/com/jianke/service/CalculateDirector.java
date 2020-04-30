@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toSet;
 @Slf4j
 public class CalculateDirector implements Serializable {
     /**
-     * 购物车商品集合（不包括搭销）
+     * 购物车单品集合（不包括搭销）
      */
     private List<Long> shopCartProductCodes;
 

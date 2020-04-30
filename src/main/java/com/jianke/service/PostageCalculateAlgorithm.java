@@ -354,7 +354,7 @@ public class PostageCalculateAlgorithm {
         }
 
         //只有一个模板允许包邮的情况（特殊和通用总共一个）
-        if (freeTemplateVos.size() == 1 && !director.isCommonTemplateAllowFree()) {
+        if (freeTemplateVos.size() == 1 && (director.getShopCartProductCodes().isEmpty() || !director.isCommonTemplateAllowFree())) {
             if (StringUtils.isBlank(allUnFreeSkuNames)) {
                 return String.format("全部商品需满%s元包邮，当前未满足此条件。", freeTemplateVos.get(0).getFreePostagePrice() / 100);
             } else {
