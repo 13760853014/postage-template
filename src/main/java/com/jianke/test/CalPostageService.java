@@ -97,7 +97,7 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("18-商品名称18-6-1000"));
 //        list.add(new ShopCartItem("31-商品名称31-1-3000"));
 //        list.add(new ShopCartItem("1-商品名称1-1-3000"));
-        list.addAll(new ShopCartItem().combine("16-商品31-1-1-2000","19-商品31-1-1-3000", 100001, "感冒搭销装"));
+        list.addAll(new ShopCartItem().combine("16-商品31-1-1-8000","19-商品31-1-1-3000", 100001, "感冒搭销装"));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
         return shop;
