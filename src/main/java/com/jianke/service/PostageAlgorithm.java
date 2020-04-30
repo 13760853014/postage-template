@@ -393,9 +393,9 @@ public class PostageAlgorithm {
         //只有一个模板允许包邮的情况（特殊和通用总共一个）
         if (freeTemplateVos.size() == 1 && !commonTemplateIsAllowFree) {
             if (StringUtils.isBlank(allUnFreeSkuNames)) {
-                return String.format("全部商品需满%s元包邮，当前未满足此条件。", freeTemplateVos.get(0).getFreePostagePrice() / 100);
+                return String.format("全部商品需满%s元包邮，当前未满足包邮条件。", freeTemplateVos.get(0).getFreePostagePrice() / 100);
             } else {
-                return String.format("此订单中%s不参与包邮，其余商品需满%s元包邮，当前未满足此条件。", allUnFreeSkuNames, freeTemplateVos.get(0).getFreePostagePrice() / 100);
+                return String.format("此订单中%s不参与包邮，其余商品需满%s元包邮，当前未满足包邮条件。", allUnFreeSkuNames, freeTemplateVos.get(0).getFreePostagePrice() / 100);
             }
         }
 
@@ -422,7 +422,7 @@ public class PostageAlgorithm {
                 info.append(String.format("%s需满足%s包邮，", commonSkuNames, commonTemplate.getFreePostagePrice() / 100));
             }
         }
-        info.append("当前未满足此条件。");
+        info.append("当前未满足包邮条件。");
         return info.toString();
     }
 
