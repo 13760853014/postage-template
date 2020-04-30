@@ -216,7 +216,7 @@ public class PostageCalculateAlgorithm {
         List<PostageTemplateVo> commonTemplateVos = director.getAllTemplateVos().stream()
                 .filter(t -> (t.getType() == 0 && CollectionUtils.isNotEmpty(director.getCommonTemplateCalculateProduct()))
                         || (t.getType() == 1 && t.getProductCodes() != null && shopCartProductCodes.stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getTemplateForCombineId().keySet().contains(t.getId()))
+                        || director.getTemplateForCombineId().containsKey(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                 .collect(Collectors.toList());
 
