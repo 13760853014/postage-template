@@ -192,7 +192,7 @@ public class PostageCalculateAlgorithm {
                     .collect(Collectors.toList());
             if (director.isContainCombine()) {
                 List<DeliveryTypeVo> unFreeDeliveryTypes = director.getAllTemplateVos().stream()
-                        .filter(t -> director.getTemplateForCombineId().keySet().contains(t.getId()))
+                        .filter(t -> director.getCombineIdForDeliveryTypeTemplate().containsValue(t.getId()))
                         .flatMap(t -> t.getPostageTypes().stream())
                         .filter(pt -> director.getPayType().equals(pt.getPayType()))
                         .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
@@ -373,14 +373,21 @@ public class PostageCalculateAlgorithm {
                     .map(director.getItemProductMap()::get)
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
-                allUnFreeCombineNames = director.getTemplateForCombineId().get(templateVo.getId())
-                        .stream().map(id -> director.getCombineProductNameMap().get(id))
+                Map<Long, String> map = director.getCombineIdForDeliveryTypeTemplate();
+                allUnFreeCombineNames = map.keySet().stream().filter(id -> templateVo.getId().equals(map.get(id)))
+                        .map(id -> director.getCombineProductNameMap().get(id))
+                        .filter(Objects::nonNull)
                         .collect(Collectors.joining(","));
                 if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
-                    freeSkuNames = freeSkuNames + "," + allUnFreeCombineNames;
+                    if (StringUtils.isNotBlank(freeSkuNames)) {
+                        freeSkuNames = freeSkuNames + ",";
+                    }
+                    freeSkuNames = freeSkuNames + allUnFreeCombineNames;
                 }
             }
-            info.append(String.format("%s需满足%s包邮，", freeSkuNames, templateVo.getFreePostagePrice() / 100));
+            if (StringUtils.isNotBlank(freeSkuNames)) {
+                info.append(String.format("%s需满足%s包邮，", freeSkuNames, templateVo.getFreePostagePrice() / 100));
+            }
         }
 
         //如果通用模板可以包邮
@@ -394,7 +401,10 @@ public class PostageCalculateAlgorithm {
                 if (director.getTemplateForCombineId().keySet().contains(director.getCommonTemplate().getId())) {
                     allUnFreeCombineNames = director.getTemplateForCombineId().get(director.getCommonTemplate().getId()).stream().filter(Objects::nonNull).map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
                     if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
-                        commonSkuNames = commonSkuNames + "," + allUnFreeCombineNames;
+                        if (StringUtils.isNotBlank(commonSkuNames)) {
+                            commonSkuNames = commonSkuNames + ",";
+                        }
+                        commonSkuNames = commonSkuNames + allUnFreeCombineNames;
                     }
                 }
             }
