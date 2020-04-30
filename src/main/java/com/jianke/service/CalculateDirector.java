@@ -169,6 +169,8 @@ public class CalculateDirector implements Serializable {
                 if (commonTemplate != null && isCommonTemplateAllowFree) {
                     templateIds.add(commonTemplate.getId());
                     combineIdForDeliveryTypeTemplate.put(combineId, commonTemplate.getId());
+                } else {
+                    combineIdForDeliveryTypeTemplate.put(combineId, commonTemplate.getId());
                 }
                 if (CollectionUtils.isNotEmpty(specialTemplate)) {
                     List<String> ids = specialTemplate.stream().filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
