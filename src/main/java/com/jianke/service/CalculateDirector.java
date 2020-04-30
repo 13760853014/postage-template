@@ -175,7 +175,7 @@ public class CalculateDirector implements Serializable {
                         .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                         .max(Comparator.comparing(PostageTemplateVo::getFreePostagePrice)).orElse(null);
                 if (specialTemplateMax != null) {
-                    templateIds = specialTemplate.stream().filter(t -> t.getFreePostagePrice() > specialTemplateMax.getFreePostagePrice())
+                    templateIds = specialTemplate.stream().filter(t -> t.getFreePostagePrice() >= specialTemplateMax.getFreePostagePrice())
                             .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                             .map(PostageTemplateVo::getId).collect(Collectors.toList());
                 }
