@@ -50,7 +50,7 @@ public class CalculateDirector implements Serializable {
     /**
      * 搭销用来计算的模板： 模板id, 多个搭配id
      */
-    private Map<String, List<Long>> templateForCombineId;
+    private Map<String, List<Long>> templateForCombineId = new HashMap<>(2);
 
     /**
      * 搭销id对应可以计算的模板id： 搭销id, 多个模板id
