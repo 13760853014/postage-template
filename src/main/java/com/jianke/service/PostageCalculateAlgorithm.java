@@ -136,13 +136,13 @@ public class PostageCalculateAlgorithm {
     //计算搭配商品的总金额
     public static long calCombineTotalNum(CalculateDirector director, PostageTemplateVo templateVo) {
         //在通用模板计算的搭销Ids
-        List<Long> combineIds = director.getTemplateForCombineId().get(templateVo.getTemplateName());
+        List<Long> combineIds = director.getTemplateForCombineId().get(templateVo.getId());
         if (CollectionUtils.isNotEmpty(combineIds)) {
             long combineAmount = director.getShopCartItems().stream()
                     .filter(item -> combineIds.contains(item.getCombineId()))
                     .mapToLong(i -> i.getActualPrice() * i.getCombineNum() * i.getProductNum())
                     .sum();
-            log.info("模板【{}】，计算运费的搭销Ids={}，搭销金额{}分", templateVo.getTemplateName(), combineIds, combineAmount);
+            log.info("模板【{}】，计算运费的搭销Ids={}，搭销金额{}分", templateVo.getId(), combineIds, combineAmount);
             return combineAmount;
         }
         return 0L;
@@ -192,7 +192,7 @@ public class PostageCalculateAlgorithm {
                     .collect(Collectors.toList());
             if (director.isContainCombine()) {
                 List<DeliveryTypeVo> unFreeDeliveryTypes = director.getAllTemplateVos().stream()
-                        .filter(t -> director.getTemplateForCombineId().keySet().contains(t.getTemplateName()))
+                        .filter(t -> director.getTemplateForCombineId().keySet().contains(t.getId()))
                         .flatMap(t -> t.getPostageTypes().stream())
                         .filter(pt -> director.getPayType().equals(pt.getPayType()))
                         .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
@@ -331,7 +331,7 @@ public class PostageCalculateAlgorithm {
                 List<Long> combineIds = director.getTemplateForCombineId().keySet().stream().filter(id -> !freeTemplateVos.stream().map(t -> t.getTemplateName()).collect(Collectors.toList()).contains(id))
                         .map(t -> director.getTemplateForCombineId().get(t))
                         .filter(Objects::nonNull).flatMap(Collection::stream).distinct().collect(Collectors.toList());
-                allUnFreeCombineNames = combineIds.stream().map(id -> director.getCombineProductMap().get(id)).collect(Collectors.joining(","));
+                allUnFreeCombineNames = combineIds.stream().map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
             }
         } else if (!CollectionUtils.isEmpty(unfreeTemplateVos)) {
             allUnFreeSkuNames = unfreeTemplateVos.stream()
@@ -343,7 +343,7 @@ public class PostageCalculateAlgorithm {
                 List<Long> combineIds = unfreeTemplateVos.stream()
                         .map(t -> director.getTemplateForCombineId().get(t.getTemplateName()))
                         .filter(Objects::nonNull).flatMap(Collection::stream).distinct().collect(Collectors.toList());
-                allUnFreeCombineNames = combineIds.stream().map(id -> director.getCombineProductMap().get(id)).collect(Collectors.joining(","));
+                allUnFreeCombineNames = combineIds.stream().map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
             }
         }
         if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
@@ -370,7 +370,7 @@ public class PostageCalculateAlgorithm {
                     .map(director.getItemProductMap()::get)
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
-                allUnFreeCombineNames = director.getTemplateForCombineId().get(templateVo.getTemplateName()).stream().map(id -> director.getCombineProductMap().get(id)).collect(Collectors.joining(","));
+                allUnFreeCombineNames = director.getTemplateForCombineId().get(templateVo.getTemplateName()).stream().map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
                 if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
                     freeSkuNames = freeSkuNames + "," + allUnFreeCombineNames;
                 }
@@ -387,7 +387,7 @@ public class PostageCalculateAlgorithm {
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
                 if (director.getTemplateForCombineId().keySet().contains(director.getCommonTemplate().getTemplateName())) {
-                    allUnFreeCombineNames = director.getTemplateForCombineId().get(director.getCommonTemplate().getTemplateName()).stream().filter(Objects::nonNull).map(id -> director.getCombineProductMap().get(id)).collect(Collectors.joining(","));
+                    allUnFreeCombineNames = director.getTemplateForCombineId().get(director.getCommonTemplate().getTemplateName()).stream().filter(Objects::nonNull).map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
                     if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
                         commonSkuNames = commonSkuNames + "," + allUnFreeCombineNames;
                     }

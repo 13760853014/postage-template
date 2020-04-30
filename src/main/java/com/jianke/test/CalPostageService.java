@@ -4,9 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.jianke.entity.cart.Merchant;
 import com.jianke.entity.cart.ShopCartBase;
 import com.jianke.entity.cart.ShopCartItem;
-import com.jianke.service.PostageAlgorithm;
 import com.jianke.service.PostageCalculateAlgorithm;
-import com.jianke.vo.DeliveryTypeVo;
 import com.jianke.vo.PostageTemplateVo;
 import com.jianke.vo.PostageTypeVo;
 import org.slf4j.Logger;
@@ -15,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class CalPostageService {
     private static final Logger log = LoggerFactory.getLogger(CalPostageService.class);
@@ -27,6 +23,7 @@ public class CalPostageService {
         templateVo.setFreePostagePrice(59 * 100L);
         templateVo.setPlatforms(Arrays.asList("app")).setStatus(1);
         templateVo.setType(0).setTemplateName("允许包邮通用模板");
+        templateVo.setId("commonTemplate1");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
         templateVo.addType(new PostageTypeVo("1","7-顺丰-0|6-EMS-0", "5-EMS-18"));
 //        templateVo.addType(new PostageTypeVo("0","5-EMS-18"));
@@ -41,6 +38,7 @@ public class CalPostageService {
         templateVo.setPlatforms(Arrays.asList("app")).setStatus(1);
         templateVo.setType(1).setTemplateName("16,17特殊模板69包邮");
         templateVo.setProductCodes(Arrays.asList(16,17));
+        templateVo.setId("specialTemplate2");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
         templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|6-申通-0", "6-申通-8|5-EMS-15"));
 //        templateVo.addType(new PostageTypeVo("0", "5-EMS-15"));
@@ -55,6 +53,7 @@ public class CalPostageService {
         templateVo.setPlatforms(Arrays.asList("app")).setStatus(1);
         templateVo.setType(1).setTemplateName("18特殊模板60包邮");
         templateVo.setProductCodes(Arrays.asList(18));
+        templateVo.setId("specialTemplate3");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
         templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|11-圆通-0", "7-顺丰-18|5-EMS-20"));
 //        templateVo.addType(new PostageTypeVo("0", "5-EMS-15"));
@@ -68,6 +67,7 @@ public class CalPostageService {
         templateVo.setPlatforms(Arrays.asList("app")).setStatus(1);
         templateVo.setType(1).setTemplateName("1特殊模板70包邮");
         templateVo.setProductCodes(Arrays.asList(1));
+        templateVo.setId("specialTemplate4");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
         templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|11-圆通-0", "5-EMS-20"));
 //        templateVo.addType(new PostageTypeVo("0", "6-申通-10|5-EMS-15"));
