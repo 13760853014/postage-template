@@ -38,7 +38,7 @@ public class PostageCalculateAlgorithm {
                 log.info("【不包邮不同快递运费】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
             } else {
                 String deliveryTypeDesc = deliveryTypeDesc(director, deliveryTypeVos.get(0));
-                log.info("【不包邮不同快递运费】 {}", deliveryTypeDesc);
+                log.info("【不包邮不同快递运费】{}", deliveryTypeDesc);
             }
         }
         //商品在详情页展示的邮费标签
