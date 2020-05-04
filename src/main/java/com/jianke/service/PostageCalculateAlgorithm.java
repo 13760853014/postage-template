@@ -29,7 +29,7 @@ public class PostageCalculateAlgorithm {
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
 
         if (isFree) {
-            log.info("【包邮运费提示语】 {}", director.getPostageTip());
+            log.info("【包邮运费提示语】{}", director.getPostageTip());
         } else {
             //不包邮的情况下，需要重新计算运费提示语
             String postageDesc = postageDesc(director);
@@ -38,7 +38,7 @@ public class PostageCalculateAlgorithm {
                 log.info("【不包邮不同快递运费】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
             } else {
                 String deliveryTypeDesc = deliveryTypeDesc(director, deliveryTypeVos.get(0));
-                log.info("【不包邮不同快递运费】 {}", deliveryTypeDesc);
+                log.info("【不包邮不同快递运费】{}", deliveryTypeDesc);
             }
         }
         //商品在详情页展示的邮费标签
@@ -202,6 +202,9 @@ public class PostageCalculateAlgorithm {
                 unFreeDeliveryTypeVos.addAll(unFreeDeliveryTypes);
             }
             log.debug("平台{}，所有模板不包邮的快递方式{}", director.getPlatform(), JSON.toJSONString(unFreeDeliveryTypeVos));
+            if (CollectionUtils.isEmpty(unFreeDeliveryTypeVos)) {
+                //return Arrays.asList(new DeliveryTypeVo("7", "顺丰", false, 1000L));
+            }
             //选出邮费最高的2个
             List<DeliveryTypeVo> deliveryTypeVos = new ArrayList<>();
             unFreeDeliveryTypeVos.stream().sorted(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice).reversed())
