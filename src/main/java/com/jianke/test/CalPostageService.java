@@ -97,10 +97,10 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("85-商品名称11-3-2000"));
 //        list.add(new ShopCartItem("17-商品名称12-1-1000"));
 //        list.add(new ShopCartItem("16-商品名称22-1-6000"));
-//        list.add(new ShopCartItem("18-商品名称18-1-3000"));
-        list.add(new ShopCartItem("31-商品名称31-1-3000"));
+        list.add(new ShopCartItem("18-商品名称18-1-3000"));
+//        list.add(new ShopCartItem("31-商品名称31-1-3000"));
 //        list.add(new ShopCartItem("11-商品名称1-1-2000"));
-        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","5-商品31-1-1-1000","16-商品31-1-1-6000", 100001, "感冒搭销装"));
+//        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","5-商品31-1-1-1000","16-商品31-1-1-1000", 100001, "感冒搭销装"));
 //        list.addAll(new ShopCartItem().combine("20-商品31-1-1-1000","19-商品31-1-1-1000","18-商品31-1-1-3000", 100002, "犯困搭销装"));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
