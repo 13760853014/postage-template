@@ -57,40 +57,35 @@ public class CouponDirector {
      * @return
      */
     public void startCouponDeduction(List<ShopCartItem> shopCartItems) {
-        if (CollectionUtils.isNotEmpty(allActivityCoupon)) {
-            couponDeduction(shopCartItems, coupons.get(0));
+        if (CollectionUtils.isEmpty(singleCouponCoupon)) {
+            return;
         }
-        if (CollectionUtils.isNotEmpty(singleCouponCoupon)) {
-            singleCouponCoupon.forEach(coupon -> couponDeduction(shopCartItems, coupon));
+        for (CouponParam coupon : singleCouponCoupon) {
+            List<ShopCartItem> items = shopCartItems.stream()
+                    .filter(item -> CollectionUtils.isEmpty(coupon.getUseCouponProducts())
+                            || coupon.getUseCouponProducts().contains(item.getProductCode()))
+                    .filter(item -> item.getCombineId() != null)
+                    .collect(Collectors.toList());
+            //1、计算单品金额
+            long totalAmount = items.stream().mapToLong(item -> item.getActualPrice() * item.getProductNum()).sum();
+            int size = items.size();
+            long deductionTotalAmount = 0;
+            int i = 0;
+
+            for (ShopCartItem item : items) {
+                i++;
+                long deductionAmount = Double.valueOf(Math.floor(((double)item.getActualPrice() * item.getProductNum() / (double)totalAmount) * coupon.getCouponValue())).longValue();
+                if (size == i) {
+                    deductionAmount = coupon.getCouponValue() - deductionTotalAmount;
+                }
+                deductionTotalAmount += deductionAmount;
+                if (deductionMap.get(item.getProductCode()) != null) {
+                    deductionAmount = deductionMap.get(item.getProductCode()) + deductionAmount;
+                }
+                deductionMap.put(item.getProductCode(), deductionAmount);
+            }
+            log.info("购物车商品{}, 摊分优惠券{}, 摊分后结果{}", JSON.toJSONString(items), JSON.toJSONString(coupon), JSON.toJSONString(deductionMap));
         }
     }
-
-    public void couponDeduction(List<ShopCartItem> shopCartItems, CouponParam coupon) {
-        List<ShopCartItem> items = shopCartItems.stream()
-                .filter(item -> CollectionUtils.isEmpty(coupon.getUseCouponProducts())
-                        || coupon.getUseCouponProducts().contains(item.getProductCode()))
-                .filter(item -> item.getCombineId() != null)
-                .collect(Collectors.toList());
-        //1、计算单品金额
-        long totalAmount = items.stream().mapToLong(item -> item.getActualPrice() * item.getProductNum()).sum();
-        int size = items.size();
-        long deductionTotalAmount = 0;
-        int i = 0;
-
-        for (ShopCartItem item : items) {
-            i++;
-            long deductionAmount = Double.valueOf(Math.floor(((double)item.getActualPrice() * item.getProductNum() / (double)totalAmount) * coupon.getCouponValue())).longValue();
-            if (size == i) {
-                deductionAmount = coupon.getCouponValue() - deductionTotalAmount;
-            }
-            deductionTotalAmount += deductionAmount;
-            if (deductionMap.get(item.getProductCode()) != null) {
-                deductionAmount = deductionMap.get(item.getProductCode()) + deductionAmount;
-            }
-            deductionMap.put(item.getProductCode(), deductionAmount);
-        }
-        log.info("购物车商品{}, 摊分优惠券{}, 摊分后结果{}", JSON.toJSONString(items), JSON.toJSONString(coupon), JSON.toJSONString(deductionMap));
-    }
-
 
 }
