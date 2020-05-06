@@ -86,8 +86,8 @@ public class CalPostageService {
 //        getPostageLabel(templateVos, 8, platform);
         //2是全场券， 3是商品券
         CouponParam coupon = new CouponParam(2, "全场券", 1000, null);
-        CouponParam coupon2 = new CouponParam(3, "商品券003", 1000, Arrays.asList(1L,2L,3L));
-        CouponParam coupon3 = new CouponParam(3, "商品券004", 1000, Arrays.asList(4L,5L,6L));
+//        CouponParam coupon2 = new CouponParam(3, "商品券003", 1000, Arrays.asList(1L,2L,3L));
+//        CouponParam coupon3 = new CouponParam(3, "商品券004", 1000, Arrays.asList(4L,5L,6L));
         List<CouponParam> couponParams = Collections.singletonList(coupon);
         PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage, couponParams);
     }
