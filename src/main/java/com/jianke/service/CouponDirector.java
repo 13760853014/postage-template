@@ -74,7 +74,7 @@ public class CouponDirector {
             List<ShopCartItem> items = shopCartItems.stream()
                     .filter(item -> CollectionUtils.isEmpty(coupon.getUseCouponProducts())
                             || coupon.getUseCouponProducts().contains(item.getProductCode()))
-                    .filter(item -> item.getCombineId() != null)
+                    .filter(item -> item.getCombineId() == null)
                     .collect(Collectors.toList());
             //1、计算单品金额
             long totalAmount = items.stream().mapToLong(item -> item.getActualPrice() * item.getProductNum()).sum();
