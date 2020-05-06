@@ -313,14 +313,14 @@ public class PostageCalculateAlgorithm {
         //根据订单产品，匹配所有的允许包邮的特殊模板
         List<PostageTemplateVo> freeTemplateVos = director.getSpecialTemplate().stream()
                 .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getTemplateForCombineId().containsKey(t.getId()))
+                        || director.getCombineIdForDeliveryTypeTemplate().containsKey(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 1))
                 .collect(Collectors.toList());
 
         //根据订单产品，匹配所有的不允许包邮的特殊模板
         List<PostageTemplateVo> unfreeTemplateVos = director.getSpecialTemplate().stream()
                 .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getTemplateForCombineId().containsKey(t.getId()))
+                        || director.getCombineIdForDeliveryTypeTemplate().containsValue(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 0))
                 .collect(Collectors.toList());
 
@@ -403,7 +403,7 @@ public class PostageCalculateAlgorithm {
                     .filter(Objects::nonNull)
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
-                if (director.getTemplateForCombineId().keySet().contains(director.getCommonTemplate().getId())) {
+                if (director.getTemplateForCombineId().containsKey(director.getCommonTemplate().getId())) {
                     allUnFreeCombineNames = director.getTemplateForCombineId().get(director.getCommonTemplate().getId()).stream().filter(Objects::nonNull).map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
                     if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
                         if (StringUtils.isNotBlank(commonSkuNames)) {
@@ -435,9 +435,21 @@ public class PostageCalculateAlgorithm {
                 productCode = director.getCommonTemplateCalculateProduct().get(0).intValue();
             }
         }
-        if (productCode == null) {
-            return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 收取%s元运费", deliveryTypeVo.getLogisticsName(), deliveryTypeVo.getDeliveryPrice() / 100);
+        if (productCode != null) {
+            return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%s元收取。", deliveryTypeVo.getLogisticsName(), director.getItemProductMap().get(productCode), deliveryTypeVo.getDeliveryPrice() / 100);
         }
-        return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%s元收取。", deliveryTypeVo.getLogisticsName(), director.getItemProductMap().get(productCode), deliveryTypeVo.getDeliveryPrice() / 100);
+
+        //找不到单品，则获取搭销的名称
+        List<String> templateIds = director.getAllTemplateVos().stream()
+                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getUnFreeDeliveryTypeVos().stream().anyMatch(dt -> dt.getId().equals(deliveryTypeVo.getId()))))
+                .filter(t -> director.getCombineIdForDeliveryTypeTemplate().containsValue(t.getId()))
+                .map(PostageTemplateVo::getId)
+                .collect(Collectors.toList());
+        String combineName = director.getCombineIdForDeliveryTypeTemplate().keySet().stream()
+                .filter(key -> templateIds.contains(director.getCombineIdForDeliveryTypeTemplate().get(key)))
+                .findFirst()
+                .map(combineId -> director.getCombineProductNameMap().get(combineId))
+                .orElse("");
+        return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%s元收取。", deliveryTypeVo.getLogisticsName(), combineName, deliveryTypeVo.getDeliveryPrice() / 100);
     }
 }
