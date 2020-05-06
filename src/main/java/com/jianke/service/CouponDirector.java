@@ -55,6 +55,13 @@ public class CouponDirector {
         }
     }
 
+    public long getDeductionValueByCode(Long skuCode) {
+        if (!deductionMap.containsKey(skuCode)) {
+            return 0L;
+        }
+        return deductionMap.get(skuCode);
+    }
+
     /**
      * 订单产品优惠券摊分
      * @return
