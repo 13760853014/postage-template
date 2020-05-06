@@ -22,10 +22,7 @@ public class PostageCalculateAlgorithm {
 
     public static void startPostageCalculate(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String platform, Integer payType, List<Long> freePostage, List<CouponParam> coupons) {
         CalculateDirector director = new CalculateDirector(templateVos, shopCartBase, platform, payType);
-        CouponDirector couponDirector = new CouponDirector(coupons);
-        if (couponDirector.isUseCoupon()) {
-            couponDirector.startCouponDeduction(director.getShopCartItems());
-        }
+        CouponDirector couponDirector = new CouponDirector(coupons, director.getShopCartItems());
 
         boolean isFree = isContainFreeProduct(director, freePostage);
         if (!isFree) {
