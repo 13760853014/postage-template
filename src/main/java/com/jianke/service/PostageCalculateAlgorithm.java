@@ -30,6 +30,7 @@ public class PostageCalculateAlgorithm {
         }
         List<DeliveryTypeVo> deliveryTypeVos = getPostageType(templateVos, shopCartBase, director, isFree);
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
+        boolean isDeliveryReach = isDeliveryReach(deliveryTypeVos, isFree);
 
         if (isFree) {
             log.info("【包邮运费提示语】{}", director.getPostageTip());
@@ -37,15 +38,32 @@ public class PostageCalculateAlgorithm {
             //不包邮的情况下，需要重新计算运费提示语
             String postageDesc = postageDesc(director);
             log.info("【不包邮运费提示语】 {}", postageDesc);
-            if (deliveryTypeVos.size() == 1) {
-                log.info("【不包邮不同快递运费】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
+            if (!isDeliveryReach) {
+                log.info("【不包邮不同快递运费：快递不可达的情况】 根据您的收货地址，按照EMS快递收取{}元运费", deliveryTypeVos.get(0).getDeliveryPrice() / 100);
             } else {
-                String deliveryTypeDesc = deliveryTypeDesc(director, deliveryTypeVos.get(0));
-                log.info("【不包邮不同快递运费】{}", deliveryTypeDesc);
+                if (deliveryTypeVos.size() == 1) {
+                    log.info("【不包邮不同快递运费】  根据您选择的支付方式（在线支付）和快递方式（{}）, 收取{}元运费", deliveryTypeVos.get(0).getLogisticsName(), deliveryTypeVos.get(0).getDeliveryPrice() / 100);
+                } else {
+                    String deliveryTypeDesc = deliveryTypeDesc(director, deliveryTypeVos.get(0));
+                    log.info("【不包邮不同快递运费】{}", deliveryTypeDesc);
+                }
             }
         }
         //商品在详情页展示的邮费标签
         getPostageLabel(templateVos, 80, platform);
+    }
+
+    private static boolean isDeliveryReach(List<DeliveryTypeVo> deliveryTypeVos, boolean isFree) {
+        List<DeliveryTypeVo> deliveryTypeVo = deliveryTypeVos.stream().filter(PostageCalculateAlgorithm::isReach).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(deliveryTypeVo)) {
+            deliveryTypeVo.add(new DeliveryTypeVo("5", "EMS", isFree, isFree ? 0 : 20L));
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean isReach(DeliveryTypeVo deliveryTypeVo) {
+        return false;
     }
 
 
