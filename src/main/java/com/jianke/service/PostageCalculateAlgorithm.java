@@ -363,7 +363,7 @@ public class PostageCalculateAlgorithm {
                 return String.format("此订单中%s不参与包邮，其余商品需满%s元包邮，当前未满足此条件。", allUnFreeSkuNames, freeTemplateVos.get(0).getFreePostagePrice() / 100);
             }
         }
-        if (freeTemplateVos.size() == 0 && director.isCommonTemplateAllowFree()) {
+        if (freeTemplateVos.size() == 0 && director.isCommonTemplateAllowFree() && CollectionUtils.isEmpty(unfreeTemplateVos)) {
             return String.format("全部商品需满%s元包邮，当前未满足此条件。", director.getCommonTemplate().getFreePostagePrice() / 100);
         }
 
