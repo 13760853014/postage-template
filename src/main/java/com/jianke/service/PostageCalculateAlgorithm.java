@@ -48,6 +48,7 @@ public class PostageCalculateAlgorithm {
         getPostageLabel(templateVos, 80, platform);
     }
 
+
     public static boolean isContainFreeProduct(CalculateDirector director, List<Long> freePostageProducts) {
         Long productCode = director.getShopCartProductCodes().stream()
                 .filter(freePostageProducts::contains)
@@ -129,7 +130,7 @@ public class PostageCalculateAlgorithm {
             //计算使用了优惠券的金额
             if (couponDirector.isUseCoupon()) {
                 long couponAmount = items.stream()
-                        .mapToLong(item -> couponDirector.getDeductionMap().get(item.getProductCode()))
+                        .mapToLong(item -> couponDirector.getDeductionValueByCode(item.getProductCode()))
                         .sum();
                 itemAmount = itemAmount - couponAmount;
             }
@@ -183,7 +184,7 @@ public class PostageCalculateAlgorithm {
             long couponAmount = director.getShopCartItems().stream()
                     .filter(item -> item.getCombineId() == null)
                     .filter(item -> director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
-                    .mapToLong(item -> couponDirector.getDeductionMap().get(item.getProductCode()))
+                    .mapToLong(item -> couponDirector.getDeductionValueByCode(item.getProductCode()))
                     .sum();
             itemAmount = itemAmount - couponAmount;
         }
