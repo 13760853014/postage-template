@@ -296,13 +296,10 @@ public class PostageCalculateAlgorithm {
                     //如果商品不允许包邮，则设置邮费提醒
                     List<PostageTypeVo> unFreePostages = commonTemplateVo.getPostageTypes().stream().filter(pt -> pt.getIsAllowFree() == 0).collect(Collectors.toList());
                     if (!CollectionUtils.isEmpty(unFreePostages)) {
-                        DeliveryTypeVo deliveryTypeVo = unFreePostages.stream()
+                        unFreePostages.stream()
                                 .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
-                                .sorted(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice))
-                                .findFirst().orElse(null);
-                        if (deliveryTypeVo != null) {
-                            map.put("postageDesc", String.format("特殊商品不参与包邮，在线支付运费%s元起", deliveryTypeVo.getDeliveryPrice() / 100));
-                        }
+                                .min(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice))
+                                .ifPresent(deliveryTypeVo -> map.put("postageDesc", String.format("特殊商品不参与包邮，在线支付运费%s元起", deliveryTypeVo.getDeliveryPrice() / 100)));
                     }
                 }
             }
