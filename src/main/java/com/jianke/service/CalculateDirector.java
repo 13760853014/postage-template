@@ -180,17 +180,14 @@ public class CalculateDirector implements Serializable {
                         .filter(t -> t.getProductCodes() != null && combineMap.get(combineId).stream().anyMatch(sku -> t.getProductCodes().contains(sku.intValue())))
                         .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                         .max(Comparator.comparing(PostageTemplateVo::getFreePostagePrice)).orElse(null);
+                //搭销在特殊模板(允许包邮)当中
                 if (specialTemplateMax != null) {
                     templateIds = specialTemplate.stream().filter(t -> t.getFreePostagePrice() >= specialTemplateMax.getFreePostagePrice())
                             .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                             .map(PostageTemplateVo::getId).collect(Collectors.toList());
                     combineIdForDeliveryTypeTemplate.put(combineId, specialTemplateMax.getId());
-                } else if (commonTemplate != null && isCommonTemplateAllowFree) {
-                    //搭销在特殊模板当中，但是没有找到包邮的特殊模板, 用通用模板
-                    templateIds.add(commonTemplate.getId());
-                    combineIdForDeliveryTypeTemplate.put(combineId, commonTemplate.getId());
                 } else {
-                    //极端情况：搭销在特殊模板当中，但是没有找到包邮的特殊模板, 通用模板也不包邮，只能用门槛最高的特殊门槛
+                    //极端情况：搭销在特殊模板当中，但是没有找到包邮的特殊模板，只能用门槛最高的特殊门槛
                     PostageTemplateVo unFreeSpecialTemplateMax = specialTemplate.stream()
                             .filter(t -> t.getProductCodes() != null && combineMap.get(combineId).stream().anyMatch(sku -> t.getProductCodes().contains(sku.intValue())))
                             .max(Comparator.comparing(PostageTemplateVo::getFreePostagePrice)).orElse(null);
