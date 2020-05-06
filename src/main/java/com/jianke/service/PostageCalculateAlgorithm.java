@@ -427,6 +427,7 @@ public class PostageCalculateAlgorithm {
                 .filter(t -> t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getUnFreeDeliveryTypeVos().stream().anyMatch(dt -> dt.getId().equals(deliveryTypeVo.getId()))))
                 .flatMap(t -> t.getProductCodes().stream())
+                .filter(p -> director.getShopCartSkuCodes().contains(p))
                 .findFirst().orElse(null);
         if (productCode == null) {
             //特殊模板找不到，在通用模板找一个
