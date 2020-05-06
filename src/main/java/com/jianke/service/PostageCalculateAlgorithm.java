@@ -146,14 +146,15 @@ public class PostageCalculateAlgorithm {
                 itemAmount = itemAmount + calCombineTotalNum(director, templateVo);
             }
             //计算使用了优惠券的金额
+            long couponAmount = 0L;
             if (couponDirector.isUseCoupon()) {
-                long couponAmount = items.stream()
+                couponAmount = items.stream()
                         .mapToLong(item -> couponDirector.getDeductionValueByCode(item.getProductCode()))
                         .sum();
                 itemAmount = itemAmount - couponAmount;
             }
             boolean isFree = itemAmount >= templateVo.getFreePostagePrice();
-            log.info("特殊模板【{}】，计算运费商品{}， 总金额{}分, 最低免邮金额{}分， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, templateVo.getFreePostagePrice(), isFree);
+            log.info("特殊模板【{}】，计算运费商品{}， 总金额{}分, 最低免邮金额{}分，使用优惠券金额{}, 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, templateVo.getFreePostagePrice(), couponAmount, isFree);
             if (isFree) {
                 log.info("此订单满足{}元包邮，已到达特殊模板包邮门槛，整单包邮", templateVo.getFreePostagePrice() / 100);
                 director.setPostageTip(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", templateVo.getFreePostagePrice() / 100));
@@ -198,8 +199,9 @@ public class PostageCalculateAlgorithm {
             itemAmount = itemAmount + calCombineTotalNum(director, director.getCommonTemplate());
         }
         //计算使用了优惠券的金额
+        long couponAmount = 0L;
         if (couponDirector.isUseCoupon()) {
-            long couponAmount = director.getShopCartItems().stream()
+            couponAmount = director.getShopCartItems().stream()
                     .filter(item -> item.getCombineId() == null)
                     .filter(item -> director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
                     .mapToLong(item -> couponDirector.getDeductionValueByCode(item.getProductCode()))
@@ -207,7 +209,7 @@ public class PostageCalculateAlgorithm {
             itemAmount = itemAmount - couponAmount;
         }
         boolean isFree = itemAmount >= director.getCommonTemplate().getFreePostagePrice();
-        log.info("通用模板，计算运费的单品{}， 总金额{}分, 最低免邮金额{}分， 是否免邮={}", director.getCommonTemplateCalculateProduct(), itemAmount, director.getCommonTemplate().getFreePostagePrice(), isFree);
+        log.info("通用模板，计算运费的单品{}， 总金额{}分, 最低免邮金额{}分，使用优惠券金额{}, 是否免邮={}", director.getCommonTemplateCalculateProduct(), itemAmount, director.getCommonTemplate().getFreePostagePrice(), couponAmount, isFree);
         return isFree;
     }
 
