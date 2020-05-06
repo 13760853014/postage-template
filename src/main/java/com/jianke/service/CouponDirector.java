@@ -39,7 +39,7 @@ public class CouponDirector {
     public CouponDirector() {
     }
 
-    public CouponDirector(List<CouponParam> coupons) {
+    public CouponDirector(List<CouponParam> coupons, List<ShopCartItem> shopCartItems) {
         this.coupons = coupons;
         this.isUseCoupon = CollectionUtils.isNotEmpty(coupons);
         this.isContainAllActivityCoupon = coupons.stream().anyMatch(c -> c.getCouponType() == 2);
@@ -49,6 +49,9 @@ public class CouponDirector {
         }
         if (isContainSingleCoupon) {
             singleCouponCoupon = coupons.stream().filter(c -> c.getCouponType() == 3).collect(Collectors.toList());
+        }
+        if (isUseCoupon) {
+            startCouponDeduction(shopCartItems);
         }
     }
 
