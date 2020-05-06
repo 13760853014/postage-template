@@ -23,7 +23,7 @@ public class CalPostageService {
         //设置通用运费模板
         PostageTemplateVo templateVo = new PostageTemplateVo();
         templateVo.setFreePostagePrice(59 * 100L);
-        templateVo.setPlatforms(Arrays.asList("mobile")).setStatus(1);
+        templateVo.setPlatforms(Arrays.asList("app")).setStatus(1);
         templateVo.setType(0).setTemplateName("允许包邮通用模板");
         templateVo.setId("commonTemplate1");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
@@ -42,8 +42,8 @@ public class CalPostageService {
         templateVo.setProductCodes(Arrays.asList(15,16,17));
         templateVo.setId("specialTemplate2");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-//        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|5-EMS-0", "11-圆通-8|5-EMS-15"));
-        templateVo.addType(new PostageTypeVo("0", "11-圆通-8|5-EMS-15"));
+        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|5-EMS-0", "11-圆通-8|5-EMS-15"));
+//        templateVo.addType(new PostageTypeVo("0", "11-圆通-8|5-EMS-15"));
         log.info(templateVo.getTemplateName() + "-----\n" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -57,8 +57,8 @@ public class CalPostageService {
         templateVo.setProductCodes(Arrays.asList(18,19,20,21));
         templateVo.setId("specialTemplate3");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|11-圆通-0", "7-顺丰-18|5-EMS-6"));
-//        templateVo.addType(new PostageTypeVo("0", "5-EMS-25"));
+//        templateVo.addType(new PostageTypeVo("1", "7-顺丰-0|11-圆通-0", "7-顺丰-18|5-EMS-6"));
+        templateVo.addType(new PostageTypeVo("0", "5-EMS-25"));
         log.info(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
     }
@@ -81,10 +81,10 @@ public class CalPostageService {
         List<String> postageTip = new ArrayList<>(2);
         List<PostageTemplateVo> templateVos = Arrays.asList(commonTemplate1(),specialTemplate2(),specialTemplate3(),specialTemplate4());
         ShopCartBase shopCartBase = buildShopCartBase();
-        String platform = "mobile";
+        String platform = "app";
         List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
-        getPostageLabel(templateVos, 8, platform);
-//        PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage);
+//        getPostageLabel(templateVos, 8, platform);
+        PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage);
     }
 
 
@@ -98,10 +98,10 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("17-商品名称12-1-1000"));
 //        list.add(new ShopCartItem("16-商品名称22-1-6000"));
 //        list.add(new ShopCartItem("18-商品名称18-1-3000"));
-        list.add(new ShopCartItem("31-商品名称31-1-6000"));
-//        list.add(new ShopCartItem("1-商品名称1-1-3000"));
-//        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","5-商品31-1-1-1000","18-商品31-1-1-3000", 100001, "感冒搭销装"));
-//        list.addAll(new ShopCartItem().combine("20-商品31-1-1-1000","19-商品31-1-1-1000","18-商品31-1-1-3000", 100002, "犯困搭销装"));
+//        list.add(new ShopCartItem("31-商品名称31-1-3000"));
+//        list.add(new ShopCartItem("11-商品名称1-1-2000"));
+        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","5-商品31-1-1-1000","16-商品31-1-1-1000", 100001, "感冒搭销装"));
+        list.addAll(new ShopCartItem().combine("20-商品31-1-1-1000","19-商品31-1-1-1000","18-商品31-1-1-3000", 100002, "犯困搭销装"));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
         return shop;
