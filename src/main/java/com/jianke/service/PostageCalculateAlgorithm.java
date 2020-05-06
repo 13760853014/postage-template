@@ -220,7 +220,7 @@ public class PostageCalculateAlgorithm {
         List<PostageTemplateVo> commonTemplateVos = director.getAllTemplateVos().stream()
                 .filter(t -> (t.getType() == 0 && CollectionUtils.isNotEmpty(director.getCommonTemplateCalculateProduct()))
                         || (t.getType() == 1 && t.getProductCodes() != null && shopCartProductCodes.stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getTemplateForCombineId().containsKey(t.getId()))
+                        || director.getCombineIdForDeliveryTypeTemplate().containsValue(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> CollectionUtils.isNotEmpty(pt.getFreeDeliveryTypeVos())))
                 .collect(Collectors.toList());
 
@@ -398,7 +398,7 @@ public class PostageCalculateAlgorithm {
         if (director.isCommonTemplateAllowFree()) {
             //获取通用模板可以用来计算的商品名称
             String commonSkuNames = director.getCommonTemplateCalculateProduct().stream()
-                    .map(director.getItemProductMap()::get)
+                    .map(p -> director.getItemProductMap().get(p.intValue()))
                     .filter(Objects::nonNull)
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
