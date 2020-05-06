@@ -296,13 +296,10 @@ public class PostageCalculateAlgorithm {
                     //如果商品不允许包邮，则设置邮费提醒
                     List<PostageTypeVo> unFreePostages = commonTemplateVo.getPostageTypes().stream().filter(pt -> pt.getIsAllowFree() == 0).collect(Collectors.toList());
                     if (!CollectionUtils.isEmpty(unFreePostages)) {
-                        DeliveryTypeVo deliveryTypeVo = unFreePostages.stream()
+                        unFreePostages.stream()
                                 .flatMap(pt -> pt.getUnFreeDeliveryTypeVos().stream())
-                                .sorted(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice))
-                                .findFirst().orElse(null);
-                        if (deliveryTypeVo != null) {
-                            map.put("postageDesc", String.format("特殊商品不参与包邮，在线支付运费%s元起", deliveryTypeVo.getDeliveryPrice() / 100));
-                        }
+                                .min(Comparator.comparing(DeliveryTypeVo::getDeliveryPrice))
+                                .ifPresent(deliveryTypeVo -> map.put("postageDesc", String.format("特殊商品不参与包邮，在线支付运费%s元起", deliveryTypeVo.getDeliveryPrice() / 100)));
                     }
                 }
             }
@@ -322,7 +319,8 @@ public class PostageCalculateAlgorithm {
 
         //根据订单产品，匹配所有的不允许包邮的特殊模板
         List<PostageTemplateVo> unfreeTemplateVos = director.getSpecialTemplate().stream()
-                .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains)))
+                .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
+                        || director.getTemplateForCombineId().containsKey(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 0))
                 .collect(Collectors.toList());
 
@@ -335,7 +333,7 @@ public class PostageCalculateAlgorithm {
                     .map(director.getItemProductMap()::get)
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
-                List<Long> combineIds = director.getTemplateForCombineId().keySet().stream().filter(id -> !freeTemplateVos.stream().map(t -> t.getTemplateName()).collect(Collectors.toList()).contains(id))
+                List<Long> combineIds = director.getTemplateForCombineId().keySet().stream().filter(id -> !freeTemplateVos.stream().map(PostageTemplateVo::getId).collect(Collectors.toList()).contains(id))
                         .map(t -> director.getTemplateForCombineId().get(t))
                         .filter(Objects::nonNull).flatMap(Collection::stream).distinct().collect(Collectors.toList());
                 allUnFreeCombineNames = combineIds.stream().map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
@@ -348,7 +346,7 @@ public class PostageCalculateAlgorithm {
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
                 List<Long> combineIds = unfreeTemplateVos.stream()
-                        .map(t -> director.getTemplateForCombineId().get(t.getTemplateName()))
+                        .map(t -> director.getTemplateForCombineId().get(t.getId()))
                         .filter(Objects::nonNull).flatMap(Collection::stream).distinct().collect(Collectors.toList());
                 allUnFreeCombineNames = combineIds.stream().map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
             }
@@ -364,6 +362,9 @@ public class PostageCalculateAlgorithm {
             } else {
                 return String.format("此订单中%s不参与包邮，其余商品需满%s元包邮，当前未满足此条件。", allUnFreeSkuNames, freeTemplateVos.get(0).getFreePostagePrice() / 100);
             }
+        }
+        if (freeTemplateVos.size() == 0 && director.isCommonTemplateAllowFree()) {
+            return String.format("全部商品需满%s元包邮，当前未满足此条件。", director.getCommonTemplate().getFreePostagePrice() / 100);
         }
 
         //有多个模板允许包邮/或者全部模板不允许包邮
