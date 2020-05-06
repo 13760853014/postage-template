@@ -1,6 +1,7 @@
 package com.jianke.service;
 
 import com.alibaba.fastjson.JSON;
+import com.jianke.entity.CouponParam;
 import com.jianke.entity.cart.ShopCartBase;
 import com.jianke.entity.cart.ShopCartItem;
 import com.jianke.vo.DeliveryTypeVo;
@@ -19,11 +20,16 @@ import static java.util.stream.Collectors.toSet;
 @Slf4j
 public class PostageCalculateAlgorithm {
 
-    public static void startPostageCalculate(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String platform, Integer payType, List<Long> freePostage) {
+    public static void startPostageCalculate(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String platform, Integer payType, List<Long> freePostage, List<CouponParam> coupons) {
         CalculateDirector director = new CalculateDirector(templateVos, shopCartBase, platform, payType);
+        CouponDirector couponDirector = new CouponDirector(coupons);
+        if (couponDirector.isUseCoupon()) {
+            couponDirector.startCouponDeduction(director.getShopCartItems());
+        }
+
         boolean isFree = isContainFreeProduct(director, freePostage);
         if (!isFree) {
-            isFree = calPostageIsFree(director);
+            isFree = calPostageIsFree(director, couponDirector);
         }
         List<DeliveryTypeVo> deliveryTypeVos = getPostageType(templateVos, shopCartBase, director, isFree);
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
@@ -62,7 +68,7 @@ public class PostageCalculateAlgorithm {
      * 1、先计算通用模板
      * 2、再计算特殊模板
      */
-    public static boolean calPostageIsFree(CalculateDirector director) {
+    public static boolean calPostageIsFree(CalculateDirector director, CouponDirector couponDirector) {
         if (director.getCommonTemplate().getId() == null && CollectionUtils.isEmpty(director.getSpecialTemplate())) {
             log.info("平台{}查询不到对应的运费模板，使用默认的技术配置模板", director.getPlatform());
             return false;
@@ -73,7 +79,7 @@ public class PostageCalculateAlgorithm {
         if (!director.isCommonTemplateAllowFree()) {
             log.debug("通用模板【{}】， 不支持包邮", director.getCommonTemplate().getTemplateName());
         } else {
-            if (calCommonTemplateIsFree(director)) {
+            if (calCommonTemplateIsFree(director, couponDirector)) {
                 log.info("此订单满足{}元包邮，已到达通用包邮门槛，整单包邮", director.getCommonTemplate().getFreePostagePrice() / 100);
                 director.setPostageTip(String.format("此订单满足%s元包邮。已到达包邮门槛，整单包邮。", director.getCommonTemplate().getFreePostagePrice() / 100));
                 return true;
@@ -123,6 +129,13 @@ public class PostageCalculateAlgorithm {
             if (director.isContainCombine()) {
                 itemAmount = itemAmount + calCombineTotalNum(director, templateVo);
             }
+            //计算使用了优惠券的金额
+            if (couponDirector.isUseCoupon()) {
+                long couponAmount = items.stream()
+                        .mapToLong(item -> couponDirector.getDeductionMap().get(item.getProductCode()))
+                        .sum();
+                itemAmount = itemAmount - couponAmount;
+            }
             boolean isFree = itemAmount >= templateVo.getFreePostagePrice();
             log.info("特殊模板【{}】，计算运费商品{}， 总金额{}分, 最低免邮金额{}分， 是否免邮={}", templateVo.getTemplateName(), skuCodes, itemAmount, templateVo.getFreePostagePrice(), isFree);
             if (isFree) {
@@ -152,7 +165,7 @@ public class PostageCalculateAlgorithm {
     /**
      * 根据平台，支付类型， 计算通用模板是否免邮
      */
-    public static boolean calCommonTemplateIsFree(CalculateDirector director) {
+    public static boolean calCommonTemplateIsFree(CalculateDirector director, CouponDirector couponDirector) {
         //1、判断使用通用模板计算运费的单品（排除所有的特殊模板商品）和搭销 不能为空
         if (CollectionUtils.isEmpty(director.getCommonTemplateCalculateProduct()) && !director.isContainCombine()) {
             log.info("计算通用模板的商品为空，并且没有搭销商品");
@@ -167,6 +180,15 @@ public class PostageCalculateAlgorithm {
         //3、计算搭销金额
         if (director.isContainCombine()) {
             itemAmount = itemAmount + calCombineTotalNum(director, director.getCommonTemplate());
+        }
+        //计算使用了优惠券的金额
+        if (couponDirector.isUseCoupon()) {
+            long couponAmount = director.getShopCartItems().stream()
+                    .filter(item -> item.getCombineId() == null)
+                    .filter(item -> director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
+                    .mapToLong(item -> couponDirector.getDeductionMap().get(item.getProductCode()))
+                    .sum();
+            itemAmount = itemAmount - couponAmount;
         }
         boolean isFree = itemAmount >= director.getCommonTemplate().getFreePostagePrice();
         log.info("通用模板，计算运费的单品{}， 总金额{}分, 最低免邮金额{}分， 是否免邮={}", director.getCommonTemplateCalculateProduct(), itemAmount, director.getCommonTemplate().getFreePostagePrice(), isFree);
@@ -313,14 +335,14 @@ public class PostageCalculateAlgorithm {
         //根据订单产品，匹配所有的允许包邮的特殊模板
         List<PostageTemplateVo> freeTemplateVos = director.getSpecialTemplate().stream()
                 .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getTemplateForCombineId().containsKey(t.getId()))
+                        || director.getCombineIdForDeliveryTypeTemplate().containsKey(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 1))
                 .collect(Collectors.toList());
 
         //根据订单产品，匹配所有的不允许包邮的特殊模板
         List<PostageTemplateVo> unfreeTemplateVos = director.getSpecialTemplate().stream()
                 .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getTemplateForCombineId().containsKey(t.getId()))
+                        || director.getCombineIdForDeliveryTypeTemplate().containsValue(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 0))
                 .collect(Collectors.toList());
 
@@ -403,7 +425,7 @@ public class PostageCalculateAlgorithm {
                     .filter(Objects::nonNull)
                     .collect(Collectors.joining(","));
             if (director.isContainCombine()) {
-                if (director.getTemplateForCombineId().keySet().contains(director.getCommonTemplate().getId())) {
+                if (director.getTemplateForCombineId().containsKey(director.getCommonTemplate().getId())) {
                     allUnFreeCombineNames = director.getTemplateForCombineId().get(director.getCommonTemplate().getId()).stream().filter(Objects::nonNull).map(id -> director.getCombineProductNameMap().get(id)).collect(Collectors.joining(","));
                     if (StringUtils.isNotBlank(allUnFreeCombineNames)) {
                         if (StringUtils.isNotBlank(commonSkuNames)) {
@@ -435,9 +457,21 @@ public class PostageCalculateAlgorithm {
                 productCode = director.getCommonTemplateCalculateProduct().get(0).intValue();
             }
         }
-        if (productCode == null) {
-            return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 收取%s元运费", deliveryTypeVo.getLogisticsName(), deliveryTypeVo.getDeliveryPrice() / 100);
+        if (productCode != null) {
+            return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%s元收取。", deliveryTypeVo.getLogisticsName(), director.getItemProductMap().get(productCode), deliveryTypeVo.getDeliveryPrice() / 100);
         }
-        return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%s元收取。", deliveryTypeVo.getLogisticsName(), director.getItemProductMap().get(productCode), deliveryTypeVo.getDeliveryPrice() / 100);
+
+        //找不到单品，则获取搭销的名称
+        List<String> templateIds = director.getAllTemplateVos().stream()
+                .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getUnFreeDeliveryTypeVos().stream().anyMatch(dt -> dt.getId().equals(deliveryTypeVo.getId()))))
+                .filter(t -> director.getCombineIdForDeliveryTypeTemplate().containsValue(t.getId()))
+                .map(PostageTemplateVo::getId)
+                .collect(Collectors.toList());
+        String combineName = director.getCombineIdForDeliveryTypeTemplate().keySet().stream()
+                .filter(key -> templateIds.contains(director.getCombineIdForDeliveryTypeTemplate().get(key)))
+                .findFirst()
+                .map(combineId -> director.getCombineProductNameMap().get(combineId))
+                .orElse("");
+        return String.format("根据您选择的支付方式（在线支付）和快递方式（%s）, 按照商品%s的运费%s元收取。", deliveryTypeVo.getLogisticsName(), combineName, deliveryTypeVo.getDeliveryPrice() / 100);
     }
 }

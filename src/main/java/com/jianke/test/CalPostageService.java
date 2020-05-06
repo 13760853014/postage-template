@@ -1,6 +1,7 @@
 package com.jianke.test;
 
 import com.alibaba.fastjson.JSON;
+import com.jianke.entity.CouponParam;
 import com.jianke.entity.cart.Merchant;
 import com.jianke.entity.cart.ShopCartBase;
 import com.jianke.entity.cart.ShopCartItem;
@@ -12,9 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-
-import static com.jianke.service.PostageCalculateAlgorithm.getPostageLabel;
 
 public class CalPostageService {
     private static final Logger log = LoggerFactory.getLogger(CalPostageService.class);
@@ -84,7 +84,12 @@ public class CalPostageService {
         String platform = "app";
         List<Long> freePostage = Arrays.asList(80L,81L,82L,83L,84L,85L);
 //        getPostageLabel(templateVos, 8, platform);
-        PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage);
+        //2是全场券， 3是商品券
+        CouponParam coupon = new CouponParam(2, "全场券", 1000, null);
+        CouponParam coupon2 = new CouponParam(3, "商品券003", 1000, Arrays.asList(1L,2L,3L));
+        CouponParam coupon3 = new CouponParam(3, "商品券004", 1000, Arrays.asList(4L,5L,6L));
+        List<CouponParam> couponParams = Collections.singletonList(coupon);
+        PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage, couponParams);
     }
 
 
