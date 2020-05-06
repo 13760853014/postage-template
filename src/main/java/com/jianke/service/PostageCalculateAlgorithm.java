@@ -111,8 +111,8 @@ public class PostageCalculateAlgorithm {
                     .filter(item -> item.getCombineId() == null)
                     .filter(item -> !director.getUnFreeProduct().contains(item.getProductCode()))
                     .filter(item -> !higherTemplateSkus.contains(item.getProductCode()))
-                    .filter(item -> !director.isCommonTemplateAllowFree()
-                            && !director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
+                    .filter(item -> director.isCommonTemplateAllowFree()
+                                    || !director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
                     .collect(Collectors.toList());
 
             List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
