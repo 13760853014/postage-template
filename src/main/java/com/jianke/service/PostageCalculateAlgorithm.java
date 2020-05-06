@@ -332,7 +332,7 @@ public class PostageCalculateAlgorithm {
         //根据订单产品，匹配所有的允许包邮的特殊模板
         List<PostageTemplateVo> freeTemplateVos = director.getSpecialTemplate().stream()
                 .filter(t -> (t.getProductCodes() != null && director.getShopCartSkuCodes().stream().anyMatch(t.getProductCodes()::contains))
-                        || director.getCombineIdForDeliveryTypeTemplate().containsKey(t.getId()))
+                        || director.getCombineIdForDeliveryTypeTemplate().containsValue(t.getId()))
                 .filter(t -> t.getPostageTypes().stream().anyMatch(pt -> pt.getIsAllowFree() == 1))
                 .collect(Collectors.toList());
 
