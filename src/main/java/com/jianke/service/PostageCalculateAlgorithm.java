@@ -2,8 +2,8 @@ package com.jianke.service;
 
 import com.alibaba.fastjson.JSON;
 import com.jianke.entity.CouponParam;
-import com.jianke.entity.cart.ShopCartBase;
-import com.jianke.entity.cart.ShopCartItem;
+import com.jianke.entity.cart.SettlementItem;
+import com.jianke.entity.cart.SettlementProduct;
 import com.jianke.vo.DeliveryTypeVo;
 import com.jianke.vo.PostageTemplateVo;
 import com.jianke.vo.PostageTypeVo;
@@ -20,15 +20,15 @@ import static java.util.stream.Collectors.toSet;
 @Slf4j
 public class PostageCalculateAlgorithm {
 
-    public static void startPostageCalculate(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String platform, Integer payType, List<Long> freePostage, List<CouponParam> coupons) {
-        CalculateDirector director = new CalculateDirector(templateVos, shopCartBase, platform, payType);
-        CouponDirector couponDirector = new CouponDirector(coupons, director.getShopCartItems());
+    public static void startPostageCalculate(List<PostageTemplateVo> templateVos, SettlementItem settlementItem, String platform, Integer payType, List<Long> freePostage, List<CouponParam> coupons) {
+        CalculateDirector director = new CalculateDirector(templateVos, settlementItem, platform, payType);
+        CouponDirector couponDirector = new CouponDirector(coupons, director.getSettlementProducts());
 
         boolean isFree = isContainFreeProduct(director, freePostage);
         if (!isFree) {
             isFree = calPostageIsFree(director, couponDirector);
         }
-        List<DeliveryTypeVo> deliveryTypeVos = getPostageType(templateVos, shopCartBase, director, isFree);
+        List<DeliveryTypeVo> deliveryTypeVos = getPostageType(templateVos, settlementItem, director, isFree);
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
         boolean isDeliveryReach = isDeliveryReach(deliveryTypeVos, isFree);
 
@@ -129,7 +129,7 @@ public class PostageCalculateAlgorithm {
             //获取购物车中，能够使用该模板计算运费的商品，
             //1、通用模板支持包邮，需要减去不包邮商品和高级特殊模板配置了的商品
             //2、通用模板不支持包邮，需要减去不包邮商品和高级特殊模板配置了的商品，以及通用模板计算的商品
-            List<ShopCartItem> items = director.getShopCartItems().stream()
+            List<SettlementProduct> items = director.getSettlementProducts().stream()
                     .filter(item -> item.getCombineId() == null)
                     .filter(item -> !director.getUnFreeProduct().contains(item.getProductCode()))
                     .filter(item -> !higherTemplateSkus.contains(item.getProductCode()))
@@ -137,7 +137,7 @@ public class PostageCalculateAlgorithm {
                                     || !director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
                     .collect(Collectors.toList());
 
-            List<Long> skuCodes = items.stream().map(ShopCartItem::getProductCode).collect(Collectors.toList());
+            List<Long> skuCodes = items.stream().map(SettlementProduct::getProductCode).collect(Collectors.toList());
 
             //1、计算单品金额
             long itemAmount = items.stream().mapToLong(item -> item.getActualPrice() * item.getProductNum()).sum();
@@ -169,7 +169,7 @@ public class PostageCalculateAlgorithm {
         //在通用模板计算的搭销Ids
         List<Long> combineIds = director.getTemplateForCombineId().get(templateVo.getId());
         if (CollectionUtils.isNotEmpty(combineIds)) {
-            long combineAmount = director.getShopCartItems().stream()
+            long combineAmount = director.getSettlementProducts().stream()
                     .filter(item -> combineIds.contains(item.getCombineId()))
                     .mapToLong(i -> i.getActualPrice() * i.getCombineNum() * i.getProductNum())
                     .sum();
@@ -189,7 +189,7 @@ public class PostageCalculateAlgorithm {
             return false;
         }
         //2、计算单品金额
-        long itemAmount = director.getShopCartItems().stream()
+        long itemAmount = director.getSettlementProducts().stream()
                 .filter(item -> item.getCombineId() == null)
                 .filter(item -> director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
                 .mapToLong(item -> item.getActualPrice() * item.getProductNum())
@@ -201,7 +201,7 @@ public class PostageCalculateAlgorithm {
         //计算使用了优惠券的金额
         long couponAmount = 0L;
         if (couponDirector.isUseSingleCoupon()) {
-            couponAmount = director.getShopCartItems().stream()
+            couponAmount = director.getSettlementProducts().stream()
                     .filter(item -> item.getCombineId() == null)
                     .filter(item -> director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
                     .mapToLong(item -> couponDirector.getDeductionValueByCode(item.getProductCode()))
@@ -218,7 +218,7 @@ public class PostageCalculateAlgorithm {
      * 1、不包邮的情况， 返回不包邮的快递方式中，价格最高的2个，快递类型不重复
      * 2、包邮的情况，   返回所有包邮的快递方式中， 交集最多的2个快递类型，否则返回顺丰
      */
-    public static List<DeliveryTypeVo> getPostageType(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, CalculateDirector director, boolean isFree) {
+    public static List<DeliveryTypeVo> getPostageType(List<PostageTemplateVo> templateVos, SettlementItem settlementItem, CalculateDirector director, boolean isFree) {
         List<Integer> shopCartProductCodes = director.getShopCartProductCodes().stream().map(Long::intValue).collect(Collectors.toList());
         if (!isFree) {
             //根据平台，支付类型，获取通用模板(有通用模板计算的商品)和特殊模板不包邮的快递方式（特殊模板需要根据购买的商品）

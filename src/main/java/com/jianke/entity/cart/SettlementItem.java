@@ -14,10 +14,10 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShopCartBase implements Serializable {
+public class SettlementItem implements Serializable {
     /**
      * 商家列表
      */
-    List<Merchant> merchants;
+    List<MerchantItem> merchants;
 
 }

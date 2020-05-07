@@ -1,8 +1,8 @@
 package com.jianke.service;
 
 import com.alibaba.fastjson.JSON;
-import com.jianke.entity.cart.ShopCartBase;
-import com.jianke.entity.cart.ShopCartItem;
+import com.jianke.entity.cart.SettlementItem;
+import com.jianke.entity.cart.SettlementProduct;
 import com.jianke.vo.PostageTemplateVo;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -86,17 +86,17 @@ public class CalculateDirector implements Serializable {
 
     private Integer payType;
 
-    private List<ShopCartItem> shopCartItems;
+    private List<SettlementProduct> settlementProducts;
 
     private List<PostageTemplateVo> allTemplateVos;
 
-    public CalculateDirector(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String platform, Integer payType) {
+    public CalculateDirector(List<PostageTemplateVo> templateVos, SettlementItem settlementItem, String platform, Integer payType) {
         this.platform = platform;
         this.payType = payType;
         this.allTemplateVos = templateVos.stream().filter(t -> t.getPlatforms().contains(platform)).collect(Collectors.toList());
-        this.shopCartItems = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(Objects::nonNull).collect(Collectors.toList());
-        this.shopCartProductCodes = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(item -> item.getCombineId() == null).map(ShopCartItem::getProductCode).distinct().collect(Collectors.toList());
-        this.shopCartCombineProductCodes = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).filter(item -> item.getCombineId() != null).map(ShopCartItem::getProductCode).distinct().collect(Collectors.toList());
+        this.settlementProducts = settlementItem.getMerchants().stream().flatMap(m -> m.getProductList().stream()).filter(Objects::nonNull).collect(Collectors.toList());
+        this.shopCartProductCodes = settlementItem.getMerchants().stream().flatMap(m -> m.getProductList().stream()).filter(item -> item.getCombineId() == null).map(SettlementProduct::getProductCode).distinct().collect(Collectors.toList());
+        this.shopCartCombineProductCodes = settlementItem.getMerchants().stream().flatMap(m -> m.getProductList().stream()).filter(item -> item.getCombineId() != null).map(SettlementProduct::getProductCode).distinct().collect(Collectors.toList());
         this.shopCartSkuCodes = shopCartProductCodes.stream().map(Long::intValue).distinct().collect(Collectors.toList());
         this.commonTemplate = allTemplateVos.stream().filter(t -> t.getType() == 0).findFirst().orElse(new PostageTemplateVo());
         this.specialTemplate = allTemplateVos.stream().filter(t -> t.getType() == 1).collect(Collectors.toList());
@@ -116,20 +116,20 @@ public class CalculateDirector implements Serializable {
         this.isCommonTemplateAllowFree = commonTemplate.getPostageTypes().stream().filter(pt -> pt.getPayType().equals(payType)).anyMatch(pt -> pt.getIsAllowFree() == 1);
         log.info("通用模板是否允许包邮：{}", isCommonTemplateAllowFree);
 
-        this.isContainCombine = isContainCombine(shopCartBase);
+        this.isContainCombine = isContainCombine(settlementItem);
         log.info("购物车是否包含搭销商品：{}", isContainCombine);
         if (isContainCombine) {
-            this.combineIdForCalculateTemplate = combineIdForCalculateTemplate(templateVos, shopCartBase, platform);
+            this.combineIdForCalculateTemplate = combineIdForCalculateTemplate(templateVos, settlementItem, platform);
             this.templateForCombineId = templateCalculateCombineId(combineIdForCalculateTemplate);
-            //this.templateForCombineId = templateCalculateCombineId(templateVos, shopCartBase, platform);
-            combineProductNameMap = shopCartItems.stream().filter(item -> item.getCombineId() != null).collect(Collectors.toMap(ShopCartItem::getCombineId, ShopCartItem::getCombineName, (i, j) -> j));
+            //this.templateForCombineId = templateCalculateCombineId(templateVos, settlementItem, platform);
+            combineProductNameMap = settlementProducts.stream().filter(item -> item.getCombineId() != null).collect(Collectors.toMap(SettlementProduct::getCombineId, SettlementProduct::getCombineName, (i, j) -> j));
             log.info("用来计算搭销的模板Id, 对应的搭销ids：{}", JSON.toJSONString(templateForCombineId));
         }
-        this.itemProductMap = shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), ShopCartItem::getProductName, (i, j) -> i));
+        this.itemProductMap = settlementItem.getMerchants().stream().flatMap(m -> m.getProductList().stream()).collect(Collectors.toMap(item -> item.getProductCode().intValue(), SettlementProduct::getProductName, (i, j) -> i));
     }
 
-    private boolean isContainCombine(ShopCartBase shopCartBase) {
-        return shopCartBase.getMerchants().stream().flatMap(m -> m.getItems().stream()).anyMatch(item -> item.getCombineId() != null);
+    private boolean isContainCombine(SettlementItem settlementItem) {
+        return settlementItem.getMerchants().stream().flatMap(m -> m.getProductList().stream()).anyMatch(item -> item.getCombineId() != null);
     }
 
     private List<Long> specialTemplateProduct(List<PostageTemplateVo> templateVos, String p, List<Long> shopCartProductCodes) {
@@ -153,14 +153,14 @@ public class CalculateDirector implements Serializable {
                 .collect(Collectors.toList());
     }
 
-    private Map<Long, List<String>> combineIdForCalculateTemplate(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p) {
+    private Map<Long, List<String>> combineIdForCalculateTemplate(List<PostageTemplateVo> templateVos, SettlementItem settlementItem, String p) {
         Map<Long, List<String>> combineIdForTemplateIdMap = new HashMap<>();
         //先找出结算商品中所有的搭配(combineMap: 搭配Id, 搭配Id对应的商品编码)
-        Map<Long, Set<Long>> combineMap = shopCartBase.getMerchants().stream()
-                .flatMap(m -> m.getItems().stream())
+        Map<Long, Set<Long>> combineMap = settlementItem.getMerchants().stream()
+                .flatMap(m -> m.getProductList().stream())
                 .filter(cartItem -> cartItem.getCombineId() != null)
-                .collect(Collectors.groupingBy(ShopCartItem::getCombineId, Collectors.collectingAndThen(
-                        toSet(), item -> item.stream().map(ShopCartItem::getProductCode).collect(toSet()))));
+                .collect(Collectors.groupingBy(SettlementProduct::getCombineId, Collectors.collectingAndThen(
+                        toSet(), item -> item.stream().map(SettlementProduct::getProductCode).collect(toSet()))));
 
         for (Long combineId : combineMap.keySet()) {
             List<String> templateIds = new ArrayList<>();
@@ -220,12 +220,12 @@ public class CalculateDirector implements Serializable {
     }
 
 
-    private Map<String, List<Long>> templateCalculateCombineId(List<PostageTemplateVo> templateVos, ShopCartBase shopCartBase, String p) {
+    private Map<String, List<Long>> templateCalculateCombineId(List<PostageTemplateVo> templateVos, SettlementItem settlementItem, String p) {
         //先找出结算商品中所有的搭配(combineMap: 搭配Id, 搭配Id对应的商品编码)
-        Map<Long, Set<Integer>> combineMap = shopCartBase.getMerchants().stream()
-                .flatMap(m -> m.getItems().stream())
+        Map<Long, Set<Integer>> combineMap = settlementItem.getMerchants().stream()
+                .flatMap(m -> m.getProductList().stream())
                 .filter(cartItem -> cartItem.getCombineId() != null)
-                .collect(Collectors.groupingBy(ShopCartItem::getCombineId, Collectors.collectingAndThen(
+                .collect(Collectors.groupingBy(SettlementProduct::getCombineId, Collectors.collectingAndThen(
                         toSet(), item -> item.stream().map(i -> i.getProductCode().intValue()).collect(toSet()))));
 
         String commonTemplateId = commonTemplate != null ? commonTemplate.getId() : "";

@@ -21,7 +21,7 @@ import java.util.List;
 @ToString
 @Accessors(chain = true)
 @NoArgsConstructor
-public class ShopCartItem implements Serializable{
+public class SettlementProduct implements Serializable{
     /**
      * 商品项ID,是一个UUID
      */
@@ -134,7 +134,7 @@ public class ShopCartItem implements Serializable{
 
     private String inventoryTip;
 
-    public ShopCartItem(String i) {
+    public SettlementProduct(String i) {
         String[] param = i.split("-");
         this.productCode = Long.valueOf(param[0]);
         this.productName = param[1];
@@ -142,11 +142,11 @@ public class ShopCartItem implements Serializable{
         this.actualPrice = Long.valueOf(param[3]);
     }
 
-    public List<ShopCartItem> combine(String i, String j, String k, Integer id, String combineName) {
+    public List<SettlementProduct> combine(String i, String j, String k, Integer id, String combineName) {
         String[] param = i.split("-");
         String[] param1 = j.split("-");
         String[] param2 = k.split("-");
-        ShopCartItem item = new ShopCartItem()
+        SettlementProduct item = new SettlementProduct()
                 .setCombineId(id.longValue())
                 .setProductCode(Long.valueOf(param[0]))
                 .setProductName(param[1])
@@ -154,7 +154,7 @@ public class ShopCartItem implements Serializable{
                 .setCombineNum(Integer.parseInt(param[3]))
                 .setActualPrice(Long.valueOf(param[4]))
                 .setCombineName(combineName);
-        ShopCartItem item1 = new ShopCartItem()
+        SettlementProduct item1 = new SettlementProduct()
                 .setCombineId(id.longValue())
                 .setProductCode(Long.valueOf(param1[0]))
                 .setProductName(param1[1])
@@ -162,7 +162,7 @@ public class ShopCartItem implements Serializable{
                 .setCombineNum(Integer.parseInt(param1[3]))
                 .setActualPrice(Long.valueOf(param1[4]))
                 .setCombineName(combineName);
-        ShopCartItem item2 = new ShopCartItem()
+        SettlementProduct item2 = new SettlementProduct()
                 .setCombineId(id.longValue())
                 .setProductCode(Long.valueOf(param2[0]))
                 .setProductName(param2[1])
