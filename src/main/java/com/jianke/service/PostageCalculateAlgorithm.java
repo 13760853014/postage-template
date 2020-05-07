@@ -59,7 +59,7 @@ public class PostageCalculateAlgorithm {
         boolean isReach = true;
         if (CollectionUtils.isEmpty(deliveryTypeVo)) {
             //其它非EMS快递不可达，返回兜底EMS 快递
-            deliveryTypeVo.add(new DeliveryTypeVo("5", "EMS", isFree, isFree ? 0 : 20L));
+            deliveryTypeVo.add(new DeliveryTypeVo("5", "EMS", isFree, isFree ? 0 : 2000L));
             isReach = false;
         }
         deliveryTypeVos.clear();
