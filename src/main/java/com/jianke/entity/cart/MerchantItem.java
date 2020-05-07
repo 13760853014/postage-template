@@ -18,12 +18,12 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @Accessors(chain = true)
-public class Merchant extends MerchantBase {
+public class MerchantItem extends MerchantBase {
 
     /**
      * 商品项列表
      */
-    private List<ShopCartItem> items;
+    private List<SettlementProduct> productList;
     
     private String channelId;
     

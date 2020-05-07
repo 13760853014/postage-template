@@ -2,7 +2,7 @@ package com.jianke.service;
 
 import com.alibaba.fastjson.JSON;
 import com.jianke.entity.CouponParam;
-import com.jianke.entity.cart.ShopCartItem;
+import com.jianke.entity.cart.SettlementProduct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -36,12 +36,12 @@ public class CouponDirector {
     public CouponDirector() {
     }
 
-    public CouponDirector(List<CouponParam> coupons, List<ShopCartItem> shopCartItems) {
+    public CouponDirector(List<CouponParam> coupons, List<SettlementProduct> settlementProducts) {
         this.coupons = coupons;
         this.isUseSingleCoupon = coupons.stream().anyMatch(c -> c.getCouponType() == 3);
         if (isUseSingleCoupon) {
             singleCoupon = coupons.stream().filter(c -> c.getCouponType() == 3).collect(Collectors.toList());
-            startCouponDeduction(shopCartItems);
+            startCouponDeduction(settlementProducts);
         }
     }
 
@@ -56,13 +56,13 @@ public class CouponDirector {
      * 订单产品优惠券摊分
      * @return
      */
-    public void startCouponDeduction(List<ShopCartItem> shopCartItems) {
+    public void startCouponDeduction(List<SettlementProduct> settlementProducts) {
         if (CollectionUtils.isEmpty(singleCoupon)) {
             return;
         }
         //一张张商品券进行摊分
         for (CouponParam coupon : singleCoupon) {
-            List<ShopCartItem> items = shopCartItems.stream()
+            List<SettlementProduct> items = settlementProducts.stream()
                     .filter(item -> CollectionUtils.isEmpty(coupon.getUseCouponProducts())
                             || coupon.getUseCouponProducts().contains(item.getProductCode()))
                     .filter(item -> item.getCombineId() == null)
@@ -73,7 +73,7 @@ public class CouponDirector {
             long deductionTotalAmount = 0;
             int i = 0;
 
-            for (ShopCartItem item : items) {
+            for (SettlementProduct item : items) {
                 i++;
                 long deductionAmount = Double.valueOf(Math.floor(((double)item.getActualPrice() * item.getProductNum() / (double)totalAmount) * coupon.getCouponValue())).longValue();
                 if (size == i) {
