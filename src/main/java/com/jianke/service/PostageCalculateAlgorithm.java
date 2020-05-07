@@ -55,14 +55,21 @@ public class PostageCalculateAlgorithm {
 
     private static boolean isDeliveryReach(List<DeliveryTypeVo> deliveryTypeVos, boolean isFree) {
         List<DeliveryTypeVo> deliveryTypeVo = deliveryTypeVos.stream().filter(PostageCalculateAlgorithm::isReach).collect(Collectors.toList());
+        boolean isReach = true;
         if (CollectionUtils.isEmpty(deliveryTypeVo)) {
+            //其它非EMS快递不可达，返回兜底EMS 快递
             deliveryTypeVo.add(new DeliveryTypeVo("5", "EMS", isFree, isFree ? 0 : 20L));
-            return false;
+            isReach = false;
         }
-        return true;
+        deliveryTypeVos.clear();
+        deliveryTypeVos.addAll(deliveryTypeVo);
+        return isReach;
     }
 
     private static boolean isReach(DeliveryTypeVo deliveryTypeVo) {
+        if (deliveryTypeVo.getLogisticsNum().equals("5")) {
+            return true;
+        }
         return false;
     }
 
