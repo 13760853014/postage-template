@@ -87,8 +87,8 @@ public class CalPostageService {
         //2是全场券， 3是商品券
 //        CouponParam coupon = new CouponParam(2, "全场券", 1000, null);
         CouponParam coupon = new CouponParam(3, "商品券003", 2000, Arrays.asList(31L,2L,3L));
-        CouponParam coupon3 = new CouponParam(3, "商品券004", 1000, Arrays.asList(11L,5L,6L));
-        List<CouponParam> couponParams = Arrays.asList(coupon, coupon3);
+        CouponParam coupon1 = new CouponParam(3, "商品券004", 1000, Arrays.asList(11L,5L,16L));
+        List<CouponParam> couponParams = Arrays.asList(coupon, coupon1);
         PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage, couponParams);
     }
 
@@ -101,9 +101,9 @@ public class CalPostageService {
         List<ShopCartItem> list = new ArrayList<>();
 //        list.add(new ShopCartItem("85-商品名称11-3-2000"));
 //        list.add(new ShopCartItem("17-商品名称12-1-1000"));
-//        list.add(new ShopCartItem("16-商品名称22-1-2000"));
+        list.add(new ShopCartItem("16-商品名称22-1-4000"));
 //        list.add(new ShopCartItem("18-商品名称18-1-1000"));
-        list.add(new ShopCartItem("31-商品名称31-1-3000"));
+        list.add(new ShopCartItem("200-商品名称31-1-600"));
         list.add(new ShopCartItem("11-商品名称1-1-6000"));
 //        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","5-商品31-1-1-1000","16-商品31-1-1-1000", 100001, "感冒搭销装"));
 //        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","9-商品31-1-1-1000","18-商品31-1-1-500", 100002, "犯困搭销装"));
