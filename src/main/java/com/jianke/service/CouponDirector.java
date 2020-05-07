@@ -24,15 +24,12 @@ public class CouponDirector {
      */
     private List<CouponParam> coupons;
 
-    private boolean isUseCoupon;
+    /**
+     * 是否使用商品券
+     */
+    private boolean isUseSingleCoupon;
 
-    private boolean isContainAllActivityCoupon;
-
-    private boolean isContainSingleCoupon;
-
-    private List<CouponParam> allActivityCoupon;
-
-    private List<CouponParam> singleCouponCoupon;
+    private List<CouponParam> singleCoupon;
 
     private Map<Long, Long> deductionMap = new HashMap<>();
 
@@ -41,16 +38,9 @@ public class CouponDirector {
 
     public CouponDirector(List<CouponParam> coupons, List<ShopCartItem> shopCartItems) {
         this.coupons = coupons;
-        this.isUseCoupon = CollectionUtils.isNotEmpty(coupons);
-        this.isContainAllActivityCoupon = coupons.stream().anyMatch(c -> c.getCouponType() == 2);
-        this.isContainSingleCoupon = coupons.stream().anyMatch(c -> c.getCouponType() == 3);
-        if (isContainAllActivityCoupon) {
-            allActivityCoupon = coupons.stream().filter(c -> c.getCouponType() == 2).collect(Collectors.toList());
-        }
-        if (isContainSingleCoupon) {
-            singleCouponCoupon = coupons.stream().filter(c -> c.getCouponType() == 3).collect(Collectors.toList());
-        }
-        if (isUseCoupon) {
+        this.isUseSingleCoupon = coupons.stream().anyMatch(c -> c.getCouponType() == 3);
+        if (isUseSingleCoupon) {
+            singleCoupon = coupons.stream().filter(c -> c.getCouponType() == 3).collect(Collectors.toList());
             startCouponDeduction(shopCartItems);
         }
     }
@@ -67,10 +57,11 @@ public class CouponDirector {
      * @return
      */
     public void startCouponDeduction(List<ShopCartItem> shopCartItems) {
-        if (CollectionUtils.isEmpty(singleCouponCoupon)) {
+        if (CollectionUtils.isEmpty(singleCoupon)) {
             return;
         }
-        for (CouponParam coupon : singleCouponCoupon) {
+        //一张张商品券进行摊分
+        for (CouponParam coupon : singleCoupon) {
             List<ShopCartItem> items = shopCartItems.stream()
                     .filter(item -> CollectionUtils.isEmpty(coupon.getUseCouponProducts())
                             || coupon.getUseCouponProducts().contains(item.getProductCode()))

@@ -147,7 +147,7 @@ public class PostageCalculateAlgorithm {
             }
             //计算使用了优惠券的金额
             long couponAmount = 0L;
-            if (couponDirector.isUseCoupon()) {
+            if (couponDirector.isUseSingleCoupon()) {
                 couponAmount = items.stream()
                         .mapToLong(item -> couponDirector.getDeductionValueByCode(item.getProductCode()))
                         .sum();
@@ -200,7 +200,7 @@ public class PostageCalculateAlgorithm {
         }
         //计算使用了优惠券的金额
         long couponAmount = 0L;
-        if (couponDirector.isUseCoupon()) {
+        if (couponDirector.isUseSingleCoupon()) {
             couponAmount = director.getShopCartItems().stream()
                     .filter(item -> item.getCombineId() == null)
                     .filter(item -> director.getCommonTemplateCalculateProduct().contains(item.getProductCode()))
