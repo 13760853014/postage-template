@@ -31,6 +31,7 @@ public class PostageCalculateAlgorithm {
         List<DeliveryTypeVo> deliveryTypeVos = getPostageType(templateVos, settlementItem, director, isFree);
         log.info("【最终结果】：  平台{}，是否包邮[{}]，返回的快递方式:\n{}\n", platform, isFree, JSON.toJSONString(deliveryTypeVos));
         boolean isDeliveryReach = isDeliveryReach(deliveryTypeVos, isFree);
+        log.info("【经过是否可达判断后：最终结果】：{}", JSON.toJSONString(deliveryTypeVos));
 
         if (isFree) {
             log.info("【包邮运费提示语】{}", director.getPostageTip());
@@ -67,7 +68,7 @@ public class PostageCalculateAlgorithm {
     }
 
     private static boolean isReach(DeliveryTypeVo deliveryTypeVo) {
-        if (deliveryTypeVo.getLogisticsNum().equals("5")) {
+        if (deliveryTypeVo.getLogisticsNum().equals("1")||deliveryTypeVo.getLogisticsNum().equals("7")) {
             return true;
         }
         return false;
