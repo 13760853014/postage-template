@@ -22,12 +22,12 @@ public class CalPostageService {
     public static PostageTemplateVo commonTemplate1() {
         //设置通用运费模板
         PostageTemplateVo templateVo = new PostageTemplateVo();
-        templateVo.setFreePostagePrice(59 * 100L);
+        templateVo.setFreePostagePrice(50 * 100L);
         templateVo.setPlatforms(Arrays.asList("app")).setStatus(1);
         templateVo.setType(0).setTemplateName("允许包邮通用模板");
         templateVo.setId("commonTemplate1");
         //设置快递方式  是否支持免邮(1是/0否),  免邮快递方式， 不免邮快递方式
-        templateVo.addType(new PostageTypeVo("1","7-顺丰-0|11-圆通-0", "5-EMS-8|11-圆通-10"));
+        templateVo.addType(new PostageTypeVo("1","7-顺丰-0|11-圆通-0", "7-顺丰-18|11-圆通-18"));
 //        templateVo.addType(new PostageTypeVo("0","5-EMS-18"));
         log.info(templateVo.getTemplateName() + "------" + JSON.toJSONString(templateVo));
         return templateVo;
@@ -86,8 +86,8 @@ public class CalPostageService {
 //        getPostageLabel(templateVos, 8, platform);
         //2是全场券， 3是商品券
 //        CouponParam coupon = new CouponParam(2, "全场券", 1000, null);
-        CouponParam coupon = new CouponParam(3, "商品券003", 2000, Arrays.asList(31L,2L,3L));
-        CouponParam coupon1 = new CouponParam(3, "商品券004", 1000, Arrays.asList(11L,5L,16L));
+        CouponParam coupon = new CouponParam(3, "商品券003", 2000, Arrays.asList(31L,18L,3L));
+        CouponParam coupon1 = new CouponParam(3, "商品券004", 3000, Arrays.asList(11L,5L,16L));
         List<CouponParam> couponParams = Arrays.asList(coupon, coupon1);
         PostageCalculateAlgorithm.startPostageCalculate(templateVos, shopCartBase, platform, 99, freePostage, couponParams);
     }
@@ -102,10 +102,10 @@ public class CalPostageService {
 //        list.add(new ShopCartItem("85-商品名称11-3-2000"));
 //        list.add(new ShopCartItem("17-商品名称12-1-1000"));
         list.add(new ShopCartItem("16-商品名称22-1-4000"));
-//        list.add(new ShopCartItem("18-商品名称18-1-1000"));
-        list.add(new ShopCartItem("200-商品名称31-1-600"));
+        list.add(new ShopCartItem("18-商品名称18-1-1000"));
+        list.add(new ShopCartItem("31-商品名称31-1-2110"));
         list.add(new ShopCartItem("11-商品名称1-1-6000"));
-//        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","5-商品31-1-1-1000","16-商品31-1-1-1000", 100001, "感冒搭销装"));
+//        list.addAll(new ShopCartItem().combine("2-商品31-1-1-100","5-商品31-1-1-100","16-商品31-1-1-4000", 100001, "感冒搭销装"));
 //        list.addAll(new ShopCartItem().combine("2-商品31-1-1-1000","9-商品31-1-1-1000","18-商品31-1-1-500", 100002, "犯困搭销装"));
         merchant.setItems(list);
         log.info("购物车商品------\n" + JSON.toJSONString(shop) + "\n");
